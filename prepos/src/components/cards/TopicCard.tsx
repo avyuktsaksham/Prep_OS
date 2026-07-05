@@ -1,4 +1,3 @@
-// src/components/cards/TopicCard.tsx
 import { useState, useEffect } from "react";
 import LectureModal from '../modals/LectureModal';
 import NotesModal from '../modals/NotesModal';
@@ -9,6 +8,7 @@ import { saveNotes, getNotes, updateNotes, deleteNotes } from '../../db/notesSer
 import { savePyq, getPyq, updatePyq, deletePyq } from '../../db/pyqService';
 import { saveRevision, getRevision, updateRevision, deleteRevision } from '../../db/revisionService';
 import type { Resource, Revision } from '../../types';
+import { useTopicProgress } from '../../hooks/useTopicProgress';
 
 interface Topic {
   id: string;
@@ -20,11 +20,13 @@ interface TopicCardProps {
 }
 
 export default function TopicCard({ topic }: TopicCardProps) {
+  const { progress, confidence } = useTopicProgress(topic.id);
+
   const [isLectureModalOpen, setIsLectureModalOpen] = useState(false);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [isPyqModalOpen, setIsPyqModalOpen] = useState(false);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
-  
+
   const [lecture, setLecture] = useState<Resource | null>(null);
   const [notes, setNotes] = useState<Resource | null>(null);
   const [pyq, setPyq] = useState<(Resource & { totalQuestions?: number }) | null>(null);
@@ -200,7 +202,7 @@ await loadResources();
             {topic.name}
           </h3>
           <span className="inline-flex shrink-0 items-center px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-100">
-            Confidence: 0%
+            Confidence: {confidence}%
           </span>
         </div>
 
@@ -208,10 +210,10 @@ await loadResources();
         <div className="mb-6">
           <div className="flex justify-between text-sm mb-2">
             <span className="font-semibold text-gray-600">Completion</span>
-            <span className="font-bold text-gray-900">0%</span>
+            <span className="font-bold text-gray-900">{progress}%</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: '0%' }}></div>
+            <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
           </div>
         </div>
 

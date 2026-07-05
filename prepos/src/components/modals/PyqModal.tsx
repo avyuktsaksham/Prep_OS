@@ -44,19 +44,28 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
 
   if (!open) return null;
 
+  const total = Number(totalQuestions) || 0;
+  const correctAnswers = Number(correct) || 0;
+  const incorrectAnswers = Number(incorrect) || 0;
+
+  const isValid =
+    correctAnswers <= total &&
+    incorrectAnswers <= total &&
+    correctAnswers + incorrectAnswers <= total;
+
+  const dynamicAccuracy = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValid) return;
+    
     onSave({
-  title: title.trim() || "Previous Year Questions",
-  totalQuestions: Number(totalQuestions),
-  correct: Number(correct),
-  incorrect: Number(incorrect),
-});
+      title: title.trim() || "Previous Year Questions",
+      totalQuestions: total,
+      correct: correctAnswers,
+      incorrect: incorrectAnswers,
+    });
   };
-
-  const currentTotal = Number(totalQuestions) || 0;
-  const currentCorrect = Number(correct) || 0;
-  const dynamicAccuracy = currentTotal > 0 ? Math.round((currentCorrect / currentTotal) * 100) : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -145,7 +154,13 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
               </div>
             </div>
 
-            {currentTotal > 0 && (
+            {!isValid && (
+              <div className="p-4 bg-red-50 rounded-xl border border-red-200 text-sm font-semibold text-red-600">
+                Correct + Incorrect answers cannot exceed Total Questions.
+              </div>
+            )}
+
+            {total > 0 && (
               <div className="mt-4 p-4 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between">
                 <span className="text-sm font-semibold text-purple-800">Calculated Accuracy</span>
                 <span className="text-xl font-bold text-purple-600">{dynamicAccuracy}%</span>
@@ -163,7 +178,10 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 border border-transparent rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
+              disabled={!isValid}
+              className={`px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm ${
+                !isValid ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+              }`}
             >
               {initialData ? 'Update PYQs' : 'Save PYQs'}
             </button>
