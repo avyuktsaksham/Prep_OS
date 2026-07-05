@@ -1,0 +1,321 @@
+{
+  "exam": "GATE CSE",
+  "subjects": [
+    {
+      "id": "sub_aptitude",
+      "name": "General Aptitude",
+      "weightage": 15,
+      "topics": [
+        {
+          "id": "top_apt_01",
+          "name": "Verbal Aptitude"
+        },
+        {
+          "id": "top_apt_02",
+          "name": "Quantitative Aptitude"
+        },
+        {
+          "id": "top_apt_03",
+          "name": "Analytical Aptitude"
+        },
+        {
+          "id": "top_apt_04",
+          "name": "Spatial Aptitude"
+        }
+      ]
+    },
+    {
+      "id": "sub_eng_math",
+      "name": "Engineering Mathematics",
+      "weightage": 5,
+      "topics": [
+        {
+          "id": "top_em_01",
+          "name": "Linear Algebra"
+        },
+        {
+          "id": "top_em_02",
+          "name": "Calculus"
+        },
+        {
+          "id": "top_em_03",
+          "name": "Probability and Statistics"
+        }
+      ]
+    },
+    {
+      "id": "sub_discrete_math",
+      "name": "Discrete Mathematics",
+      "weightage": 10,
+      "topics": [
+        {
+          "id": "top_dm_01",
+          "name": "Propositional and First Order Logic"
+        },
+        {
+          "id": "top_dm_02",
+          "name": "Sets, Relations, Functions, Partial Orders and Lattices"
+        },
+        {
+          "id": "top_dm_03",
+          "name": "Monoids and Groups"
+        },
+        {
+          "id": "top_dm_04",
+          "name": "Graphs: Connectivity, Matching, Coloring"
+        },
+        {
+          "id": "top_dm_05",
+          "name": "Combinatorics: Counting, Recurrence Relations, Generating Functions"
+        }
+      ]
+    },
+    {
+      "id": "sub_digital_logic",
+      "name": "Digital Logic",
+      "weightage": 5,
+      "topics": [
+        {
+          "id": "top_dl_01",
+          "name": "Boolean Algebra and Minimization"
+        },
+        {
+          "id": "top_dl_02",
+          "name": "Combinational Circuits"
+        },
+        {
+          "id": "top_dl_03",
+          "name": "Sequential Circuits"
+        },
+        {
+          "id": "top_dl_04",
+          "name": "Number Representations and Computer Arithmetic"
+        }
+      ]
+    },
+    {
+      "id": "sub_coa",
+      "name": "Computer Organization and Architecture",
+      "weightage": 8,
+      "topics": [
+        {
+          "id": "top_coa_01",
+          "name": "Machine Instructions and Addressing Modes"
+        },
+        {
+          "id": "top_coa_02",
+          "name": "ALU, Data-path and Control Unit"
+        },
+        {
+          "id": "top_coa_03",
+          "name": "Instruction Pipelining and Hazards"
+        },
+        {
+          "id": "top_coa_04",
+          "name": "Memory Hierarchy: Cache, Main Memory and Secondary Storage"
+        },
+        {
+          "id": "top_coa_05",
+          "name": "I/O Interface: Interrupt and DMA Mode"
+        }
+      ]
+    },
+    {
+      "id": "sub_ds_prog",
+      "name": "Programming and Data Structures",
+      "weightage": 10,
+      "topics": [
+        {
+          "id": "top_ds_01",
+          "name": "Programming in C"
+        },
+        {
+          "id": "top_ds_02",
+          "name": "Recursion"
+        },
+        {
+          "id": "top_ds_03",
+          "name": "Arrays, Stacks and Queues"
+        },
+        {
+          "id": "top_ds_04",
+          "name": "Linked Lists"
+        },
+        {
+          "id": "top_ds_05",
+          "name": "Trees, Binary Search Trees, Binary Heaps"
+        },
+        {
+          "id": "top_ds_06",
+          "name": "Graphs"
+        }
+      ]
+    },
+    {
+      "id": "sub_algorithms",
+      "name": "Algorithms",
+      "weightage": 8,
+      "topics": [
+        {
+          "id": "top_algo_01",
+          "name": "Searching, Sorting, Hashing"
+        },
+        {
+          "id": "top_algo_02",
+          "name": "Asymptotic Worst Case Time and Space Complexity"
+        },
+        {
+          "id": "top_algo_03",
+          "name": "Algorithm Design Techniques: Greedy, Dynamic Programming, Divide-and-Conquer"
+        },
+        {
+          "id": "top_algo_04",
+          "name": "Graph Traversals, Minimum Spanning Trees, Shortest Paths"
+        }
+      ]
+    },
+    {
+      "id": "sub_toc",
+      "name": "Theory of Computation",
+      "weightage": 8,
+      "topics": [
+        {
+          "id": "top_toc_01",
+          "name": "Regular Expressions and Finite Automata"
+        },
+        {
+          "id": "top_toc_02",
+          "name": "Context-Free Grammars and Push-down Automata"
+        },
+        {
+          "id": "top_toc_03",
+          "name": "Regular and Context-Free Languages, Pumping Lemma"
+        },
+        {
+          "id": "top_toc_04",
+          "name": "Turing Machines and Undecidability"
+        }
+      ]
+    },
+    {
+      "id": "sub_compiler",
+      "name": "Compiler Design",
+      "weightage": 5,
+      "topics": [
+        {
+          "id": "top_cd_01",
+          "name": "Lexical Analysis"
+        },
+        {
+          "id": "top_cd_02",
+          "name": "Parsing"
+        },
+        {
+          "id": "top_cd_03",
+          "name": "Syntax-Directed Translation"
+        },
+        {
+          "id": "top_cd_04",
+          "name": "Runtime Environments"
+        },
+        {
+          "id": "top_cd_05",
+          "name": "Intermediate Code Generation"
+        },
+        {
+          "id": "top_cd_06",
+          "name": "Local Optimization and Data Flow Analyses"
+        }
+      ]
+    },
+    {
+      "id": "sub_os",
+      "name": "Operating System",
+      "weightage": 9,
+      "topics": [
+        {
+          "id": "top_os_01",
+          "name": "System Calls, Processes, Threads"
+        },
+        {
+          "id": "top_os_02",
+          "name": "Inter-process Communication, Concurrency and Synchronization"
+        },
+        {
+          "id": "top_os_03",
+          "name": "Deadlock"
+        },
+        {
+          "id": "top_os_04",
+          "name": "CPU and I/O Scheduling"
+        },
+        {
+          "id": "top_os_05",
+          "name": "Memory Management and Virtual Memory"
+        },
+        {
+          "id": "top_os_06",
+          "name": "File Systems"
+        }
+      ]
+    },
+    {
+      "id": "sub_dbms",
+      "name": "Databases",
+      "weightage": 8,
+      "topics": [
+        {
+          "id": "top_dbms_01",
+          "name": "ER-Model"
+        },
+        {
+          "id": "top_dbms_02",
+          "name": "Relational Model: Relational Algebra, Tuple Calculus, SQL"
+        },
+        {
+          "id": "top_dbms_03",
+          "name": "Integrity Constraints and Normal Forms"
+        },
+        {
+          "id": "top_dbms_04",
+          "name": "File Organization and Indexing (B and B+ trees)"
+        },
+        {
+          "id": "top_dbms_05",
+          "name": "Transactions and Concurrency Control"
+        }
+      ]
+    },
+    {
+      "id": "sub_cn",
+      "name": "Computer Networks",
+      "weightage": 9,
+      "topics": [
+        {
+          "id": "top_cn_01",
+          "name": "Concept of Layering: OSI and TCP/IP models"
+        },
+        {
+          "id": "top_cn_02",
+          "name": "Data Link Layer: Framing, Error Control, Flow Control, Ethernet"
+        },
+        {
+          "id": "top_cn_03",
+          "name": "Network Layer: IPv4/IPv6, Routing Algorithms"
+        },
+        {
+          "id": "top_cn_04",
+          "name": "Transport Layer: TCP/UDP, Congestion Control"
+        },
+        {
+          "id": "top_cn_05",
+          "name": "Application Layer: DNS, SMTP, POP, FTP, HTTP"
+        },
+        {
+          "id": "top_cn_06",
+          "name": "Network Security: Authentication, Cryptography, Firewalls"
+        }
+      ]
+    }
+  ]
+}
