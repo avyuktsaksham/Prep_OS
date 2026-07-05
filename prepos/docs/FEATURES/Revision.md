@@ -1,172 +1,97 @@
-# Prep_OS Formulas
-
-> This document contains every calculation used inside Prep_OS.
+# Revision Module
 
 ---
 
-# Purpose
+## Purpose
 
-All mathematical calculations must be documented here.
+The Revision Module manages spaced repetition for every topic using the SM-2 algorithm.
 
-Business logic should never be duplicated anywhere else.
-
-Every Engine must follow these formulas.
+Its objective is to improve long-term retention by scheduling revisions intelligently.
 
 ---
 
-# Topic Progress Formula
+## Features
 
-Topic Progress is calculated using three components.
-
-Lecture
-
-40%
-
-Notes
-
-30%
-
-PYQ
-
-30%
-
-Formula
-
-Progress
-
-=
-
-(Lecture × 0.40)
-
-+
-
-(Notes × 0.30)
-
-+
-
-(PYQ × 0.30)
-
-Maximum
-
-100%
-
-Minimum
-
-0%
+- Create Revision Schedule
+- Update Revision
+- Delete Revision
+- SM-2 Algorithm
+- Confidence Calculation
+- Automatic Next Review Date
 
 ---
 
-# Subject Progress Formula
+## Database
 
-Each topic progress contributes equally inside its subject.
+Table
 
-Formula
-
-Subject Progress
-
-=
-
-Average of all Topic Progress
+revisions
 
 ---
 
-# Lecture Progress Formula
+## Fields
 
-Lecture Progress
+id
 
-=
+topicId
 
-Watched Minutes
+nextReviewDate
 
-÷
+interval
 
-Duration Minutes
+easeFactor
 
-×
-
-100
-
-Maximum
-
-100%
-
-Minimum
-
-0%
+reviewCount
 
 ---
 
-# Notes Progress Formula
+## Algorithm
 
-If Notes exist
-
-100%
-
-Else
-
-0%
+SM-2
 
 ---
 
-# PYQ Accuracy Formula
+## Initial Values
 
-Accuracy
+Ease Factor
 
-=
+2.5
 
-Correct Answers
+Interval
 
-÷
+0
 
-Total Questions
+Review Count
 
-×
-
-100
-
-Maximum
-
-100%
-
-Minimum
-
-0%
+0
 
 ---
 
-# Confidence Formula
+## Confidence Formula
 
 If Revision does not exist
 
-Confidence
+↓
 
-=
-
-PYQ Accuracy
+Confidence = PYQ Accuracy
 
 Else
 
+↓
+
 Confidence
 
 =
 
-(60% × PYQ Accuracy)
+60% PYQ Accuracy
 
 +
 
-(40% × Revision Quality)
-
-Maximum
-
-100%
-
-Minimum
-
-0%
+40% Revision Quality
 
 ---
 
-# Revision Quality Formula
+## Revision Quality
 
 Revision Quality
 
@@ -186,186 +111,64 @@ Maximum
 
 100%
 
-Minimum
+---
 
-0%
+## UI
+
+Revision Modal
+
+Topic Card
+
+Confidence Badge
+
+Revision Timeline
 
 ---
 
-# SM-2 Revision Algorithm
+## Services
 
-Initial Values
-
-Ease Factor
-
-2.5
-
-Interval
-
-0
-
-Review Count
-
-0
+revisionService
 
 ---
 
-If Quality >= 3
+## Current Limitations
 
-Review 1
+Single revision schedule per topic.
 
-Interval = 1 Day
+Manual review only.
 
-Review 2
-
-Interval = 6 Days
-
-Review 3+
-
-Interval
-
-=
-
-Previous Interval
-
-×
-
-Ease Factor
+No reminder system.
 
 ---
 
-If Quality < 3
+## Known Bugs
 
-Review Count
-
-=
-
-0
-
-Interval
-
-=
-
-1 Day
+None
 
 ---
 
-Ease Factor Update
+## Future Improvements
 
-EaseFactor
+Notification System
 
-=
+Calendar Integration
 
-EaseFactor
+AI Revision Suggestions
 
-+
+Missed Revision Recovery
 
-0.1
+Priority Queue
 
--
+Revision Analytics
 
-(5 - Quality)
-
-×
-
-(0.08 + (5 - Quality) × 0.02)
-
-Minimum EaseFactor
-
-1.3
+Daily Revision Dashboard
 
 ---
 
-# Validation Rules
+## Current Status
 
-Lecture
+Stable
 
-Watched Minutes
+Production Ready
 
-≤
-
-Duration
-
----
-
-PYQ
-
-Correct
-
-≤
-
-Total
-
-Incorrect
-
-≤
-
-Total
-
-Correct + Incorrect
-
-≤
-
-Total
-
----
-
-Progress
-
-Never greater than
-
-100%
-
----
-
-Accuracy
-
-Never greater than
-
-100%
-
----
-
-Confidence
-
-Never greater than
-
-100%
-
----
-
-# Future Formulas
-
-Study Score
-
-Weak Topic Score
-
-Revision Priority
-
-Difficulty Index
-
-Consistency Score
-
-Learning Velocity
-
-Burnout Score
-
-AI Recommendation Score
-
----
-
-# Formula Change Policy
-
-Whenever any formula changes:
-
-1. Update this document.
-
-2. Update corresponding Engine.
-
-3. Test calculations.
-
-4. Update CHANGELOG.
-
-5. Commit.
-
-6. Push.
+Tested
