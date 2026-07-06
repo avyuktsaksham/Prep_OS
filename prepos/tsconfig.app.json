@@ -23,9 +23,11 @@
     "noFallthroughCasesInSwitch": true,
 
     "baseUrl": ".",
-"paths": {
-  "@/*": ["./src/*"]
-}
+    "ignoreDeprecations": "6.0",
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }

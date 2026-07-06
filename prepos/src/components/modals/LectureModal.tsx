@@ -4,6 +4,8 @@ export interface LectureData {
   title: string;
   url?: string;
   durationMinutes: number;
+  watchedMinutes: number;
+  completed: boolean;
 }
 
 interface LectureModalProps {
@@ -11,41 +13,63 @@ interface LectureModalProps {
   onClose: () => void;
   onSave: (data: LectureData) => void;
   initialData?: {
-    title: string;
-    url: string;
-    durationMinutes: number;
-  };
+  title: string;
+  url: string;
+  durationMinutes: number;
+  watchedMinutes: number;
+  completed: boolean;
+};
 }
 
 export default function LectureModal({ open, onClose, onSave, initialData }: LectureModalProps) {
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [duration, setDuration] = useState('');
+  const [watchedMinutes, setWatchedMinutes] = useState('0');
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
     if (open) {
       if (initialData) {
-        setTitle(initialData.title);
-        setUrl(initialData.url);
-        setDuration(initialData.durationMinutes.toString());
-      } else {
-        setTitle('');
-        setUrl('');
-        setDuration('');
-      }
+  setTitle(initialData.title);
+  setUrl(initialData.url);
+  setDuration(initialData.durationMinutes.toString());
+
+  setWatchedMinutes(initialData.watchedMinutes.toString());
+  setCompleted(initialData.completed);
+} else {
+  setTitle('');
+  setUrl('');
+  setDuration('');
+
+  setWatchedMinutes('0');
+  setCompleted(false);
+}
     }
   }, [open, initialData]);
 
   if (!open) return null;
+  const durationNum = Number(duration) || 0;
+const watchedNum = Number(watchedMinutes) || 0;
+
+const isValid =
+  durationNum > 0 &&
+  watchedNum >= 0 &&
+  watchedNum <= durationNum;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      title,
-      url,
-      durationMinutes: Number(duration) || 0,
-    });
-  };
+  e.preventDefault();
+
+  if (!isValid) return;
+
+  onSave({
+    title,
+    url,
+    durationMinutes: durationNum,
+    watchedMinutes: watchedNum,
+    completed,
+  });
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -115,6 +139,74 @@ export default function LectureModal({ open, onClose, onSave, initialData }: Lec
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
               />
             </div>
+            <div>
+  <label
+    htmlFor="watchedMinutes"
+    className="block text-sm font-semibold text-gray-700 mb-1.5"
+  >
+    Watched Minutes
+  </label>
+
+  <input
+    id="watchedMinutes"
+    type="number"
+    min="0"
+    max={duration || ""}
+    value={watchedMinutes}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setWatchedMinutes(value);
+
+      if (value === "") {
+  setCompleted(false);
+  return;
+}
+      const watched = Number(value);
+      const total = Number(duration);
+
+      if (total > 0 && watched >= total) {
+  setCompleted(true);
+} else {
+  setCompleted(false);
+}
+    }}
+    placeholder="0"
+    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+  />
+</div>
+<p className="text-xs text-gray-500 mt-1">
+  Remaining: {Math.max(0, durationNum - watchedNum)} min
+</p>
+<div className="flex items-center">
+  <input
+    id="completed"
+    type="checkbox"
+    checked={completed}
+    onChange={(e) => {
+      const checked = e.target.checked;
+
+      setCompleted(checked);
+
+      if (checked) {
+  setWatchedMinutes(duration);
+}
+    }}
+    className="mr-3"
+  />
+
+  <label
+    htmlFor="completed"
+    className="text-sm font-semibold text-gray-700"
+  >
+    Mark as Completed
+  </label>
+</div>
+{!isValid && (
+  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm font-semibold text-red-600">
+    Watched minutes cannot exceed lecture duration.
+  </div>
+)}
           </div>
 
           <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3">
@@ -126,8 +218,13 @@ export default function LectureModal({ open, onClose, onSave, initialData }: Lec
               Cancel
             </button>
             <button
-              type="submit"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 border border-transparent rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
+  type="submit"
+  disabled={!isValid}
+              className={`px-5 py-2.5 text-sm font-semibold text-white border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm ${
+  isValid
+    ? "bg-blue-600 hover:bg-blue-700"
+    : "bg-blue-300 cursor-not-allowed"
+}`}
             >
               {initialData ? 'Update Lecture' : 'Save Lecture'}
             </button>

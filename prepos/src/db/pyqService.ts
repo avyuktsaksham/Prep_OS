@@ -71,3 +71,13 @@ export async function deletePyq(topicId: string): Promise<void> {
     await db.resources.delete(existingPyq.id);
   }
 }
+/**
+ * Returns all PYQ resources.
+ * Used by TodayTaskEngine.
+ */
+export async function getAllPyqs(): Promise<Resource[]> {
+  return db.resources
+    .where('type')
+    .equals('PYQ')
+    .toArray();
+}

@@ -54,30 +54,42 @@ export default function TopicCard({ topic }: TopicCardProps) {
   }, [topic.id]);
 
   // Lecture Handlers
-  const handleSaveLecture = async (data: { title: string; url?: string; durationMinutes: number }) => {
-    try {
-      if (lecture) {
-        await updateLecture(topic.id, {
-          title: data.title,
-          url: data.url,
-          durationMinutes: data.durationMinutes,
-        });
-      } else {
-        await saveLecture(topic.id, {
-          title: data.title,
-          url: data.url,
-          durationMinutes: data.durationMinutes,
-          watchedMinutes: 0,
-          completed: false,
-          lastWatchedAt: Date.now(),
-        });
-      }
-      await loadResources();
-      setIsLectureModalOpen(false);
-    } catch (error) {
-      console.error('Failed to save lecture:', error);
+  const handleSaveLecture = async (data: {
+  title: string;
+  url?: string;
+  durationMinutes: number;
+  watchedMinutes: number;
+  completed: boolean;
+}) => {
+  try {
+    if (lecture) {
+      await updateLecture(topic.id, {
+        title: data.title,
+        url: data.url,
+        durationMinutes: data.durationMinutes,
+        watchedMinutes: data.watchedMinutes,
+        completed: data.completed,
+        lastWatchedAt:
+  data.watchedMinutes > 0 ? Date.now() : undefined,
+      });
+    } else {
+      await saveLecture(topic.id, {
+        title: data.title,
+        url: data.url,
+        durationMinutes: data.durationMinutes,
+        watchedMinutes: data.watchedMinutes,
+        completed: data.completed,
+        lastWatchedAt:
+  data.watchedMinutes > 0 ? Date.now() : undefined,
+      });
     }
-  };
+
+    await loadResources();
+    setIsLectureModalOpen(false);
+  } catch (error) {
+    console.error('Failed to save lecture:', error);
+  }
+};
 
   const handleDeleteLecture = async () => {
     if (window.confirm('Are you sure you want to delete this lecture?')) {
@@ -191,7 +203,12 @@ await loadResources();
 
   const duration = lecture?.durationMinutes || 0;
   const watched = lecture?.watchedMinutes || 0;
-  const progressPercent = duration > 0 ? Math.min(100, Math.round((watched / duration) * 100)) : 0;
+  const progressPercent =
+  lecture?.completed
+    ? 100
+    : duration > 0
+      ? Math.min(100, Math.round((watched / duration) * 100))
+      : 0;
 
   return (
     <>
@@ -224,8 +241,14 @@ await loadResources();
               <div>
                 <h4 className="font-bold text-gray-900 text-sm">{lecture.title}</h4>
                 <p className="text-xs font-medium text-gray-500 mt-1">
-                  {watched} / {duration} mins watched
-                </p>
+  {watched} / {duration} mins watched
+</p>
+
+{lecture.completed && (
+  <p className="text-xs font-semibold text-green-600 mt-1">
+    ✓ Completed
+  </p>
+)}
               </div>
               <div className="flex items-center gap-3">
                 <button 
@@ -442,16 +465,22 @@ await loadResources();
         </div>
       </div>
 
-      <LectureModal 
-        open={isLectureModalOpen} 
-        onClose={() => setIsLectureModalOpen(false)} 
-        onSave={handleSaveLecture} 
-        initialData={lecture ? {
+      <LectureModal
+  open={isLectureModalOpen}
+  onClose={() => setIsLectureModalOpen(false)}
+  onSave={handleSaveLecture}
+  initialData={
+    lecture
+      ? {
           title: lecture.title,
           url: lecture.url || '',
-          durationMinutes: lecture.durationMinutes || 0
-        } : undefined}
-      />
+          durationMinutes: lecture.durationMinutes || 0,
+          watchedMinutes: lecture.watchedMinutes || 0,
+          completed: lecture.completed || false,
+        }
+      : undefined
+  }
+/>
 
       <NotesModal
         open={isNotesModalOpen}

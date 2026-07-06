@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import gateData from '../data/gate.json';
 import { useSubjectProgress } from '../hooks/useSubjectProgress';
+import { useTodayTasks } from '../hooks/useTodayTasks';
 
 interface Topic {
   id: string;
@@ -69,6 +70,8 @@ function SubjectCard({ subject }: { subject: Subject }) {
 }
 
 export default function Dashboard() {
+  const todayTasks = useTodayTasks();
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8 lg:p-12">
       <div className="max-w-7xl mx-auto">
@@ -78,6 +81,59 @@ export default function Dashboard() {
           </h1>
           <p className="text-gray-500 mt-2">PrepOS Personal Dashboard</p>
         </header>
+        <section className="mb-10">
+  <div className="flex items-center justify-between mb-5">
+    <h2 className="text-2xl font-bold text-gray-900">
+      Today's Tasks
+    </h2>
+
+    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
+      {todayTasks.length} Pending
+    </span>
+  </div>
+
+  {todayTasks.length === 0 ? (
+    <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+      <p className="text-gray-500">
+        🎉 No pending tasks for today.
+      </p>
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {todayTasks.map((task) => (
+        <Link
+          key={task.id}
+          to={`/subject/${task.subjectId}`}
+          className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition"
+        >
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-xs font-bold text-red-600">
+              Priority {task.priority}
+            </span>
+
+            <span className="text-xs text-gray-500">
+              {task.subjectName}
+            </span>
+          </div>
+
+          <h3 className="font-bold text-gray-900">
+            {task.topicName}
+          </h3>
+
+          <p className="text-sm text-gray-600 mt-2">
+            {task.title}
+          </p>
+
+          <div className="mt-4">
+            <span className="text-blue-600 text-sm font-semibold">
+              {task.actionLabel} →
+            </span>
+          </div>
+        </Link>
+      ))}
+    </div>
+  )}
+</section>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {typedGateData.subjects.map((subject) => (

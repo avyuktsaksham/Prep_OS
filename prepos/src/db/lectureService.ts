@@ -27,7 +27,10 @@ export async function saveLecture(
     durationMinutes: lecture.durationMinutes,
     watchedMinutes: lecture.watchedMinutes ?? 0,
     completed: lecture.completed ?? false,
-    lastWatchedAt: lecture.lastWatchedAt,
+    lastWatchedAt:
+  lecture.watchedMinutes && lecture.watchedMinutes > 0
+    ? (lecture.lastWatchedAt ?? Date.now())
+    : undefined,
   };
 
   await db.resources.add(resource);
@@ -65,9 +68,12 @@ export async function updateLecture(
     ...(lecture.completed !== undefined && {
       completed: lecture.completed,
     }),
-    ...(lecture.lastWatchedAt !== undefined && {
-      lastWatchedAt: lecture.lastWatchedAt,
-    }),
+    ...(lecture.watchedMinutes !== undefined && {
+  lastWatchedAt:
+    lecture.watchedMinutes > 0
+      ? (lecture.lastWatchedAt ?? Date.now())
+      : undefined,
+}),
   };
 
   return db.resources.update(existingLecture.id, updates);
@@ -81,4 +87,15 @@ export async function deleteLecture(
   if (!existingLecture) return;
 
   await db.resources.delete(existingLecture.id);
+}
+
+/**
+ * Returns all lecture resources.
+ * Used by TodayTaskEngine.
+ */
+export async function getAllLectures(): Promise<Resource[]> {
+  return db.resources
+    .where('type')
+    .equals('LECTURE')
+    .toArray();
 }

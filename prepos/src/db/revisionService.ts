@@ -72,3 +72,11 @@ export async function deleteRevision(topicId: string): Promise<void> {
     await db.revisions.delete(existing.id);
   }
 }
+
+/**
+ * Returns all revision schedules.
+ * Used by TodayTaskEngine.
+ */
+export async function getAllRevisions(): Promise<Revision[]> {
+  return db.revisions.toArray();
+}

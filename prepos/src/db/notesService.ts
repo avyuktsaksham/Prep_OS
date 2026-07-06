@@ -50,3 +50,14 @@ export async function deleteNotes(topicId: string): Promise<void> {
     await db.resources.delete(existingNotes.id);
   }
 }
+
+/**
+ * Returns all notes resources.
+ * Used by TodayTaskEngine.
+ */
+export async function getAllNotes(): Promise<Resource[]> {
+  return db.resources
+    .where('type')
+    .equals('NOTES')
+    .toArray();
+}

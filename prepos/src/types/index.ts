@@ -68,3 +68,21 @@ export interface Setting {
   key: string;
   value: string | number | boolean;
 }
+
+export type TaskType =
+  | 'REVISION'
+  | 'LECTURE'
+  | 'NOTES'
+  | 'PYQ';
+
+export interface TodayTask {
+  id: string;
+  topicId: string;
+  topicName: string;
+  subjectId: string;
+  subjectName: string;
+  type: TaskType;
+  priority: 1 | 2 | 3 | 4;
+  title: string;
+  actionLabel: string;
+}
