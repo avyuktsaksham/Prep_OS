@@ -2,12 +2,50 @@
 import { useMemo, useState } from 'react';
 import { useMistakes } from '../hooks/useMistakes';
 import { formatDate } from "../utils/date";
+import ReviewMistakeModal from "../components/mistakes/ReviewMistakeModal";
+import type { ExtractedMistake } from "../engine/mistakeEngine";
+import { processMistakeReview } from "../engine/mistakeEngine";
+import { updatePyqResource, getPyq } from "../db/pyqService";
 
 type TabType = 'DUE' | 'PENDING' | 'RESOLVED';
 
 export default function MistakeVault() {
   const mistakes = useMistakes();
   const [activeTab, setActiveTab] = useState<TabType>('DUE');
+  const [selectedMistake, setSelectedMistake] =
+  useState<ExtractedMistake | null>(null);
+
+const [isReviewModalOpen, setIsReviewModalOpen] =
+  useState(false);
+
+  const handleReview = async (
+  confidence: "AGAIN" | "HARD" | "GOOD" | "EASY"
+) => {
+  if (!selectedMistake) return;
+
+  try {
+    const pyq = await getPyq(selectedMistake.topicId);
+
+    if (!pyq) return;
+
+    const updatedMistakes = (pyq.mistakeItems || []).map((m) =>
+      m.id === selectedMistake.id
+        ? processMistakeReview(m, confidence)
+        : m
+    );
+
+    await updatePyqResource({
+      ...pyq,
+      mistakeItems: updatedMistakes,
+    });
+
+    setIsReviewModalOpen(false);
+    setSelectedMistake(null);
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   
   const {
@@ -163,11 +201,14 @@ export default function MistakeVault() {
                 </div>
 
                 <button
-                  disabled
-                  className="w-full mt-2 py-2.5 px-4 bg-gray-100 text-gray-400 font-bold text-sm rounded-lg cursor-not-allowed border border-gray-200"
-                >
-                  Review Mistake
-                </button>
+  onClick={() => {
+    setSelectedMistake(mistake);
+    setIsReviewModalOpen(true);
+  }}
+  className="w-full mt-2 py-2.5 px-4 bg-blue-600 text-white font-bold text-sm rounded-lg hover:bg-blue-700 transition-colors"
+>
+  Review Mistake
+</button>
               </div>
             </div>
           ))}
@@ -188,6 +229,15 @@ export default function MistakeVault() {
           </p>
         </div>
       )}
+      <ReviewMistakeModal
+  isOpen={isReviewModalOpen}
+  mistake={selectedMistake}
+  onClose={() => {
+    setIsReviewModalOpen(false);
+    setSelectedMistake(null);
+  }}
+  onReview={handleReview}
+/>
     </div>
   );
 }

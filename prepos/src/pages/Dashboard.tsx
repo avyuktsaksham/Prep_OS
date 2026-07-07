@@ -84,11 +84,11 @@ export default function Dashboard() {
         <section className="mb-10">
   <div className="flex items-center justify-between mb-5">
     <h2 className="text-2xl font-bold text-gray-900">
-      Today's Tasks
+      
     </h2>
 
     <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
-      {todayTasks.length} Pending
+      {todayTasks.length} Tasks Today
     </span>
   </div>
 

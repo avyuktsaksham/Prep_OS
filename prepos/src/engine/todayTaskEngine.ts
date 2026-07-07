@@ -172,9 +172,22 @@ for (const mistake of extractedMistakes) {
   }
 }
 
+// --------------------------------------------
+// Remove duplicate lecture tasks if a mistake
+// review already exists for the same topic.
+// --------------------------------------------
+
+const mistakeTopicIds = new Set(
+  dueMistakes.map(task => task.topicId)
+);
+
+const filteredLectures = pendingLectures.filter(
+  task => !mistakeTopicIds.has(task.topicId)
+);
+
   const allTasks = [
   ...dueRevisions,
-  ...pendingLectures,
+  ...filteredLectures,
   ...dueMistakes,
   ...missingNotes,
   ...pendingPyqs
