@@ -3,6 +3,7 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import SubjectPage from './pages/SubjectPage';
 import Analytics from './pages/Analytics';
+import MistakeVault from './pages/MistakeVault';
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/subject/:id" element={<SubjectPage />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/mistakes" element={<MistakeVault />} />
         </Route>
       </Routes>
     </BrowserRouter>

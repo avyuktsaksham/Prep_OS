@@ -9,6 +9,9 @@ import { savePyq, getPyq, updatePyq, deletePyq } from '../../db/pyqService';
 import { saveRevision, getRevision, updateRevision, deleteRevision } from '../../db/revisionService';
 import type { Resource, Revision } from '../../types';
 import { useTopicProgress } from '../../hooks/useTopicProgress';
+import LogMistakeModal from "../mistakes/LogMistakeModal";
+import { updatePyqResource } from "../../db/pyqService";
+import type { MistakeItem } from "../../types";
 
 interface Topic {
   id: string;
@@ -26,6 +29,10 @@ export default function TopicCard({ topic }: TopicCardProps) {
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [isPyqModalOpen, setIsPyqModalOpen] = useState(false);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [isMistakeModalOpen, setIsMistakeModalOpen] = useState(false);
+
+const [activePyq, setActivePyq] =
+  useState<(Resource & { totalQuestions?: number }) | null>(null);
 
   const [lecture, setLecture] = useState<Resource | null>(null);
   const [notes, setNotes] = useState<Resource | null>(null);
@@ -190,6 +197,38 @@ await loadResources();
     }
   };
 
+  const handleSaveMistake = async (data: {
+  questionReference: string;
+  notes: string;
+  difficulty: "HARD" | "MEDIUM" | "EASY";
+}) => {
+  if (!activePyq) return;
+
+  const newMistake: MistakeItem = {
+    id: crypto.randomUUID(),
+    questionReference: data.questionReference,
+    notes: data.notes,
+    difficulty: data.difficulty,
+    status: "PENDING",
+    attempts: 0,
+    confidenceHistory: [],
+    nextReviewDate: Date.now(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await updatePyqResource({
+    ...activePyq,
+    mistakeItems: [
+      ...(activePyq.mistakeItems || []),
+      newMistake,
+    ],
+  });
+
+  setIsMistakeModalOpen(false);
+  setActivePyq(null);
+};
+
   const handleDeleteRevision = async () => {
     if (window.confirm('Are you sure you want to delete this topic\'s revision schedule?')) {
       try {
@@ -331,6 +370,14 @@ await loadResources();
                 >
                   Open PYQ
                 </button>
+                <button
+                onClick={() => {
+                  setActivePyq(pyq);
+                  setIsMistakeModalOpen(true);
+                }}
+                className="px-4 py-2 bg-orange-100 text-orange-800 rounded-lg text-xs font-bold hover:bg-orange-200 transition-colors">
+                   Log Mistake
+                   </button>
                 <button 
                   onClick={handleDeletePyq}
                   className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors"
@@ -509,6 +556,15 @@ await loadResources();
         onClose={() => setIsRevisionModalOpen(false)}
         onSave={handleSaveRevision}
       />
+
+      <LogMistakeModal
+  isOpen={isMistakeModalOpen}
+  onClose={() => {
+    setIsMistakeModalOpen(false);
+    setActivePyq(null);
+  }}
+  onSave={handleSaveMistake}
+/>
     </>
   );
 }

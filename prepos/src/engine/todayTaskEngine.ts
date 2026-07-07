@@ -4,7 +4,9 @@ import { getAllLectures } from '../db/lectureService';
 import { getAllNotes } from '../db/notesService';
 import { getAllPyqs } from '../db/pyqService';
 import { getAllRevisions } from '../db/revisionService';
+import { extractAllMistakes } from './mistakeEngine';
 import type { TodayTask } from '../types';
+
 
 interface TopicMeta {
   topicId: string;
@@ -54,6 +56,7 @@ export async function getTodayTasks(): Promise<TodayTask[]> {
   const pendingLectures: TodayTask[] = [];
   const missingNotes: TodayTask[] = [];
   const pendingPyqs: TodayTask[] = [];
+  const dueMistakes: TodayTask[] = [];
 
   for (const t of topics) {
     const lecture = lectureMap.get(t.topicId);
@@ -144,8 +147,38 @@ if (isActive) {
       });
     }
   }
+  // 5. Due Mistakes
+const extractedMistakes = extractAllMistakes(allPyqs);
 
-  const allTasks = [...dueRevisions, ...pendingLectures, ...missingNotes, ...pendingPyqs];
+for (const mistake of extractedMistakes) {
+  if (
+    mistake.status === "PENDING" &&
+    mistake.nextReviewDate <= now
+  ) {
+    const topic = topics.find(
+      t => t.topicId === mistake.topicId
+    );
+
+    if (!topic) continue;
+
+    dueMistakes.push({
+      id: `${mistake.id}-MISTAKE`,
+      ...topic,
+      type: "MISTAKE",
+      priority: 2,
+      title: "Review Mistake",
+      actionLabel: "Review",
+    });
+  }
+}
+
+  const allTasks = [
+  ...dueRevisions,
+  ...pendingLectures,
+  ...dueMistakes,
+  ...missingNotes,
+  ...pendingPyqs
+];
   
   // Ascending sort (1 is highest priority)
   return allTasks

@@ -4,6 +4,7 @@ import { getAllLectures } from '../db/lectureService';
 import { getAllNotes } from '../db/notesService';
 import { getAllPyqs } from '../db/pyqService';
 import { getAllRevisions } from '../db/revisionService';
+import { extractAllMistakes } from './mistakeEngine';
 import type { 
   AnalyticsSnapshot, 
   SubjectMetrics, 
@@ -180,6 +181,42 @@ export async function generateAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
   const overallProgress = totalTopics > 0 ? Math.round(sumWeightedTopicProgress / totalTopics) : 0;
   const overallAccuracy = totalPyqsSolved > 0 ? Math.round((totalCorrectPyqs / totalPyqsSolved) * 100) : 0;
   const dueRevisionsCount = getOverdueRevisionsCount(revisions);
+  // ----- Mistake Analytics -----
+const extractedMistakes = extractAllMistakes(pyqs);
+
+const totalMistakes = extractedMistakes.length;
+
+const pendingMistakes = extractedMistakes.filter(
+  m => m.status === "PENDING"
+).length;
+
+const resolvedMistakes = extractedMistakes.filter(
+  m => m.status === "RESOLVED"
+).length;
+
+const mistakeResolutionRate =
+  totalMistakes > 0
+    ? Math.round((resolvedMistakes / totalMistakes) * 100)
+    : 0;
+
+const averageAttempts =
+  totalMistakes > 0
+    ? Math.round(
+        (extractedMistakes.reduce(
+          (sum, m) => sum + m.attempts,
+          0
+        ) /
+          totalMistakes) *
+          10
+      ) / 10
+    : 0;
+
+const dueMistakesToday = extractedMistakes.filter(
+  m =>
+    m.status === "PENDING" &&
+    m.nextReviewDate <= Date.now()
+).length;
+// -----------------------------
   const insights = calculateInsights(subjectMetrics);
 
   return {
@@ -192,6 +229,12 @@ export async function generateAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
     totalPyqsSolved,
     overallAccuracy,
     dueRevisionsCount,
+    totalMistakes,
+    pendingMistakes, 
+    resolvedMistakes,
+    mistakeResolutionRate,
+    averageAttempts,
+    dueMistakesToday,
     subjectMetrics,
     insights
   };

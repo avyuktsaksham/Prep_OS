@@ -21,6 +21,27 @@ export type ResourceType =
   | "BOOK"
   | "LINK";
 
+export type MistakeConfidence =
+  | "AGAIN"
+  | "HARD"
+  | "GOOD"
+  | "EASY";
+
+// Used only inside PYQ Resource
+export interface MistakeItem {
+  id: string;
+  questionId?: string;
+  questionReference: string;
+  notes?: string;
+  difficulty?: "HARD" | "MEDIUM" | "EASY";
+  status: "PENDING" | "RESOLVED";
+  attempts: number;
+  confidenceHistory: MistakeConfidence[];
+  nextReviewDate: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Resource {
   id: string;
   topicId: string;
@@ -45,6 +66,7 @@ export interface Resource {
   correct?: number;
   incorrect?: number;
   accuracy?: number;
+  mistakeItems?: MistakeItem[]; // Only for PYQ resources
 }
 
 export interface Revision {
@@ -56,24 +78,17 @@ export interface Revision {
   reviewCount: number;
 }
 
-export interface Mistake {
-  id: string;
-  topicId: string;
-  note: string;
-  isResolved: boolean;
-  createdAt: number;
-}
-
 export interface Setting {
   key: string;
   value: string | number | boolean;
 }
 
 export type TaskType =
-  | 'REVISION'
-  | 'LECTURE'
-  | 'NOTES'
-  | 'PYQ';
+  | "LECTURE"
+  | "NOTES"
+  | "PYQ"
+  | "REVISION"
+  | "MISTAKE";
 
 export interface TodayTask {
   id: string;
@@ -118,6 +133,12 @@ export interface AnalyticsSnapshot {
   totalPyqsSolved: number;
   overallAccuracy: number;
   dueRevisionsCount: number;
+  totalMistakes: number;
+  pendingMistakes: number;
+  resolvedMistakes: number;
+  mistakeResolutionRate: number;
+  averageAttempts: number;
+  dueMistakesToday: number;
   subjectMetrics: SubjectMetrics[];
   insights: AnalyticsInsights;
 }
