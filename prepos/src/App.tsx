@@ -1,16 +1,19 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import SubjectPage from "./pages/SubjectPage";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Layout from './components/layout/Layout';
+import Dashboard from './pages/Dashboard';
+import SubjectPage from './pages/SubjectPage';
+import Analytics from './pages/Analytics';
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/subject/:id" element={<SubjectPage />} />
+        <Route element={<Layout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/subject/:id" element={<SubjectPage />} />
+          <Route path="/analytics" element={<Analytics />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;

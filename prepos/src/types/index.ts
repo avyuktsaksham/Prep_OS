@@ -86,3 +86,38 @@ export interface TodayTask {
   title: string;
   actionLabel: string;
 }
+
+export interface SubjectMetrics {
+  subjectId: string;
+  subjectName: string;
+  weightage: number;
+  totalTopics: number;
+  completedTopics: number;
+  subjectProgress: number;
+  lectureProgress: number;
+  notesProgress: number;
+  pyqProgress: number;
+  accuracy: number;
+  studyTimeMinutes: number;
+}
+
+export interface AnalyticsInsights {
+  strongestSubject: string | null;
+  weakestSubject: string | null;
+  mostStudiedSubject: string | null;
+  leastStudiedSubject: string | null;
+}
+
+export interface AnalyticsSnapshot {
+  overallProgress: number;
+  totalSubjects: number;
+  completedSubjects: number;
+  totalTopics: number;
+  completedTopics: number;
+  totalStudyTimeMinutes: number;
+  totalPyqsSolved: number;
+  overallAccuracy: number;
+  dueRevisionsCount: number;
+  subjectMetrics: SubjectMetrics[];
+  insights: AnalyticsInsights;
+}
