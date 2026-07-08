@@ -84,7 +84,7 @@ export default function Dashboard() {
         <section className="mb-10">
   <div className="flex items-center justify-between mb-5">
     <h2 className="text-2xl font-bold text-gray-900">
-      
+      Today's Tasks
     </h2>
 
     <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
@@ -125,9 +125,15 @@ export default function Dashboard() {
           </p>
 
           <div className="mt-4">
-            <span className="text-blue-600 text-sm font-semibold">
-              {task.actionLabel} →
-            </span>
+            <div className="mt-4 flex items-center justify-between">
+  <span className="text-blue-600 text-sm font-semibold">
+    {task.actionLabel} →
+  </span>
+
+  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+    ⏱ {task.estimatedMinutes} min
+  </span>
+</div>
           </div>
         </Link>
       ))}

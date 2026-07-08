@@ -6,6 +6,13 @@ import { getAllPyqs } from '../db/pyqService';
 import { getAllRevisions } from '../db/revisionService';
 import { extractAllMistakes } from './mistakeEngine';
 import type { TodayTask } from '../types';
+import {
+  estimateLecture,
+  estimateNotes,
+  estimatePyq,
+  estimateRevision,
+  estimateMistake,
+} from "./estimateEngine";
 
 
 interface TopicMeta {
@@ -72,7 +79,8 @@ export async function getTodayTasks(): Promise<TodayTask[]> {
         type: 'REVISION',
         priority: 1,
         title: 'Spaced Repetition Due',
-        actionLabel: 'Review Now'
+        actionLabel: 'Review Now',
+        estimatedMinutes: estimateRevision()
       });
     }
 
@@ -92,6 +100,7 @@ if (isActive) {
       priority: 2,
       title: "Start Lecture",
       actionLabel: "Start",
+      estimatedMinutes: estimateLecture(lecture ?? undefined)
     });
   } else {
     const duration = lecture.durationMinutes || 0;
@@ -109,6 +118,7 @@ if (isActive) {
         priority: 2,
         title: "Resume Lecture",
         actionLabel: "Continue",
+        estimatedMinutes: estimateLecture(lecture)
       });
     }
   }
@@ -126,7 +136,8 @@ if (isActive) {
         type: 'NOTES',
         priority: 3,
         title: 'Notes Missing',
-        actionLabel: 'Add Notes'
+        actionLabel: 'Add Notes',
+        estimatedMinutes: estimateNotes()
       });
     }
 
@@ -143,7 +154,8 @@ if (isActive) {
         type: 'PYQ',
         priority: 4,
         title: 'PYQs Pending',
-        actionLabel: 'Solve PYQs'
+        actionLabel: 'Solve PYQs',
+        estimatedMinutes: estimatePyq(pyq)
       });
     }
   }
@@ -168,6 +180,7 @@ for (const mistake of extractedMistakes) {
       priority: 2,
       title: "Review Mistake",
       actionLabel: "Review",
+      estimatedMinutes: estimateMistake()
     });
   }
 }
@@ -194,6 +207,11 @@ const filteredLectures = pendingLectures.filter(
 ];
   
   // Ascending sort (1 is highest priority)
-  return allTasks
-.sort((a,b)=>a.priority-b.priority);
+  return allTasks.sort((a, b) => {
+  if (a.priority !== b.priority) {
+    return a.priority - b.priority;
+  }
+
+  return a.subjectName.localeCompare(b.subjectName);
+});
 }

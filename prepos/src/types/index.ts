@@ -80,7 +80,7 @@ export interface Revision {
 
 export interface Setting {
   key: string;
-  value: string | number | boolean;
+  value: unknown;
 }
 
 export type TaskType =
@@ -96,10 +96,16 @@ export interface TodayTask {
   topicName: string;
   subjectId: string;
   subjectName: string;
+
   type: TaskType;
+
   priority: 1 | 2 | 3 | 4;
+
   title: string;
   actionLabel: string;
+
+  // Estimated time to finish this task
+  estimatedMinutes: number;
 }
 
 export interface SubjectMetrics {
@@ -141,4 +147,26 @@ export interface AnalyticsSnapshot {
   dueMistakesToday: number;
   subjectMetrics: SubjectMetrics[];
   insights: AnalyticsInsights;
+}
+
+export type TimelineEventType =
+  | "LECTURE_STARTED"
+  | "LECTURE_COMPLETED"
+  | "NOTES_ADDED"
+  | "PYQ_COMPLETED"
+  | "MISTAKE_LOGGED"
+  | "MISTAKE_REVIEWED"
+  | "REVISION_DONE"
+  | "MASTERED";
+
+export interface TimelineEvent {
+  id: string;
+  topicId: string;
+
+  type: TimelineEventType;
+
+  title: string;
+  description?: string;
+
+  createdAt: number;
 }

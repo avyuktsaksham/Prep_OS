@@ -4,7 +4,6 @@ import type {
   Topic,
   Resource,
   Revision,
-  Mistake,
   Setting,
 } from "../types";
 
@@ -13,7 +12,6 @@ class PrepOSDatabase extends Dexie {
   topics!: Table<Topic, string>;
   resources!: Table<Resource, string>;
   revisions!: Table<Revision, string>;
-  mistakes!: Table<Mistake, string>;
   settings!: Table<Setting, string>;
 
   constructor() {
@@ -24,7 +22,6 @@ class PrepOSDatabase extends Dexie {
       topics: "id,subjectId,status",
       resources: "id,topicId,type,completed",
       revisions: "id,topicId,nextReviewDate",
-      mistakes: "id,topicId,isResolved",
       settings: "key",
     });
   }

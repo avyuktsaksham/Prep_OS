@@ -110,10 +110,17 @@ await loadResources();
   };
 
   const handleContinueLecture = () => {
-    if (lecture?.url) {
-      window.open(lecture.url, '_blank', 'noopener,noreferrer');
-    }
-  };
+  if (!lecture?.url) {
+    alert("Lecture URL not available.");
+    return;
+  }
+
+  window.open(
+    lecture.url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
 
   // Notes Handlers
   const handleSaveNotes = async (data: { title: string; markdown: string }) => {
@@ -218,15 +225,17 @@ await loadResources();
   };
 
   await updatePyqResource({
-    ...activePyq,
-    mistakeItems: [
-      ...(activePyq.mistakeItems || []),
-      newMistake,
-    ],
-  });
+  ...activePyq,
+  mistakeItems: [
+    ...(activePyq.mistakeItems || []),
+    newMistake,
+  ],
+});
 
-  setIsMistakeModalOpen(false);
-  setActivePyq(null);
+await loadResources();
+
+setIsMistakeModalOpen(false);
+setActivePyq(null);
 };
 
   const handleDeleteRevision = async () => {
@@ -500,12 +509,30 @@ await loadResources();
                 <span className={`text-xs font-medium ${revision ? 'text-teal-700' : 'text-gray-400'}`}>Revision</span>
               </div>
 
-              {/* Node: Mastered (Pending) */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center transition-all">
-                </div>
-                <span className="text-xs font-medium text-gray-400">Mastered</span>
-              </div>
+              {/* Node: Mastered */}
+<div className="flex flex-col items-center gap-2">
+  <div
+    className={`w-8 h-8 rounded-full border-4 border-white flex items-center justify-center transition-all ${
+      progress === 100
+        ? "bg-green-600 shadow-sm"
+        : "bg-gray-100"
+    }`}
+  >
+    {progress === 100 && (
+      <div className="w-2.5 h-2.5 bg-white rounded-full" />
+    )}
+  </div>
+
+  <span
+    className={`text-xs font-medium ${
+      progress === 100
+        ? "text-green-700"
+        : "text-gray-400"
+    }`}
+  >
+    Mastered
+  </span>
+</div>
 
             </div>
           </div>
