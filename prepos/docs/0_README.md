@@ -53,7 +53,7 @@ Prep_OS
 
 Version
 
-v0.3.0
+v1.0.0
 
 Branch
 

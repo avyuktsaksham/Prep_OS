@@ -68,7 +68,7 @@ develop
 
 # Current Milestone
 
-Milestone 1
+Milestone 1-7 (v1.0.0)
 
 ---
 

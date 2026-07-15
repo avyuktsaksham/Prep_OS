@@ -84,7 +84,7 @@ develop
 
 Milestone
 
-Milestone 1
+Milestone 1-7 (v1.0.0)
 
 Compile
 
