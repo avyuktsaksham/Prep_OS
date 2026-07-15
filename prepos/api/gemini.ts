@@ -4,6 +4,8 @@
 
 export const config = { runtime: 'edge' };
 
+declare const process: { env: { GEMINI_API_KEY?: string } };
+
 const GEMINI_MODEL = 'gemini-flash-latest';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
@@ -12,10 +14,7 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
   }
 
-  // Access environment variable without referencing the Node 'process' symbol
-  // which isn't available in some runtimes (Edge). Try globalThis.process first,
-  // then fall back to a top-level global (if provided by the platform).
-  const apiKey = (globalThis as any).process?.env?.GEMINI_API_KEY || (globalThis as any).GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: 'Server is missing GEMINI_API_KEY. Add it in Vercel project settings.' }),
