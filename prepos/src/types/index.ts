@@ -1,3 +1,5 @@
+// src/types/index.ts
+
 export type TopicStatus = "NOT_STARTED" | "LEARNING" | "MASTERED";
 
 export interface Subject {
@@ -106,6 +108,9 @@ export interface TodayTask {
 
   // Estimated time to finish this task
   estimatedMinutes: number;
+  
+  // Optional yield score for advanced sorting/UI
+  yieldScore?: number; 
 }
 
 export interface SubjectMetrics {

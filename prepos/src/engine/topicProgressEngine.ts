@@ -1,8 +1,9 @@
 // src/engine/topicProgressEngine.ts
-import { getLecture } from '../db/lectureService';
+import { getLecturesByTopic } from '../db/lectureService';
 import { getNotes } from '../db/notesService';
 import { getPyq } from '../db/pyqService';
 import { getRevision } from '../db/revisionService';
+import { calculateLectureSetProgress } from './lectureProgress';
 
 export interface TopicProgress {
   progress: number;
@@ -13,17 +14,15 @@ export interface TopicProgress {
 }
 
 export async function calculateTopicProgress(topicId: string): Promise<TopicProgress> {
-  const [lecture, notes, pyq, revision] = await Promise.all([
-    getLecture(topicId),
+  const [lectures, notes, pyq, revision] = await Promise.all([
+    getLecturesByTopic(topicId),
     getNotes(topicId),
     getPyq(topicId),
     getRevision(topicId)
   ]);
 
-  // 1. Lecture Progress
-  const duration = lecture?.durationMinutes || 0;
-  const watched = lecture?.watchedMinutes || 0;
-  const lectureProgress = duration > 0 ? Math.min(100, Math.round((watched / duration) * 100)) : 0;
+  // 1. Lecture Progress (averaged across all lectures for this topic)
+  const lectureProgress = calculateLectureSetProgress(lectures);
 
   // 2. Notes Progress
   const notesProgress = notes ? 100 : 0;

@@ -42,17 +42,17 @@ export default function LogMistakeModal({ isOpen, onClose, onSave }: LogMistakeM
   return (
     <div 
     onClick={onClose}
-    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div 
-        className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all"
+        className="bg-void-raised w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
-          <h2 className="text-xl font-bold text-gray-900">Log a Mistake</h2>
+        <div className="px-6 py-4 border-b border-edge flex items-center justify-between bg-void-raised">
+          <h2 className="text-xl font-bold text-ink">Log a Mistake</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+            className="text-ink-faint hover:text-ink transition-colors p-1 rounded-lg hover:bg-edge"
             aria-label="Close modal"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,9 +62,9 @@ export default function LogMistakeModal({ isOpen, onClose, onSave }: LogMistakeM
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-5 bg-white">
+        <div className="p-6 space-y-5 bg-void-raised">
           <div>
-            <label htmlFor="questionReference" className="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label htmlFor="questionReference" className="block text-sm font-semibold text-ink-muted mb-1.5">
               Question Reference <span className="text-red-500">*</span>
             </label>
             <input
@@ -73,20 +73,20 @@ export default function LogMistakeModal({ isOpen, onClose, onSave }: LogMistakeM
               value={questionReference}
               onChange={(e) => setQuestionReference(e.target.value)}
               placeholder="e.g., Gate 2023 - Q45, or page 42 #3"
-              className="w-full px-3.5 py-2.5 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-gray-400"
+              className="w-full px-3.5 py-2.5 text-ink bg-panel-raised border border-edge rounded-xl focus:outline-none focus:ring-2 focus:ring-signal/50 focus:border-signal transition-all placeholder:text-ink-faint"
               autoFocus
             />
           </div>
 
           <div>
-            <label htmlFor="difficulty" className="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label htmlFor="difficulty" className="block text-sm font-semibold text-ink-muted mb-1.5">
               Initial Difficulty
             </label>
             <select
               id="difficulty"
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value as "HARD" | "MEDIUM" | "EASY")}
-              className="w-full px-3.5 py-2.5 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+              className="w-full px-3.5 py-2.5 text-ink bg-panel-raised border border-edge rounded-xl focus:outline-none focus:ring-2 focus:ring-signal/50 focus:border-signal transition-all appearance-none cursor-pointer"
             >
               <option value="HARD">Hard</option>
               <option value="MEDIUM">Medium</option>
@@ -95,7 +95,7 @@ export default function LogMistakeModal({ isOpen, onClose, onSave }: LogMistakeM
           </div>
 
           <div>
-            <label htmlFor="notes" className="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label htmlFor="notes" className="block text-sm font-semibold text-ink-muted mb-1.5">
               Notes (Optional)
             </label>
             <textarea
@@ -104,23 +104,23 @@ export default function LogMistakeModal({ isOpen, onClose, onSave }: LogMistakeM
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Why did you get this wrong? Key concept to remember..."
               rows={3}
-              className="w-full px-3.5 py-2.5 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all resize-none placeholder:text-gray-400"
+              className="w-full px-3.5 py-2.5 text-ink bg-panel-raised border border-edge rounded-xl focus:outline-none focus:ring-2 focus:ring-signal/50 focus:border-signal transition-all resize-none placeholder:text-ink-faint"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 border-t border-edge bg-panel-raised flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+            className="px-5 py-2.5 text-sm font-semibold text-ink-muted bg-void-raised border border-edge rounded-xl hover:bg-panel-raised hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-edge"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isSaveDisabled}
-            className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="px-5 py-2.5 text-sm font-bold text-white bg-signal rounded-xl hover:bg-signal-bright transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-signal/50"
           >
             Save Mistake
           </button>

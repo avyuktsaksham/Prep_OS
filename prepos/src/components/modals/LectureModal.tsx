@@ -74,16 +74,16 @@ const isValid =
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden scale-in-95 animate-in zoom-in-95 duration-200"
+        className="bg-void-raised w-full max-w-md rounded-2xl shadow-2xl overflow-hidden scale-in-95 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="px-6 py-4 border-b border-edge flex items-center justify-between">
+          <h2 className="text-xl font-bold text-ink">
             {initialData ? 'Edit Lecture' : 'Add Lecture'}
           </h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"
+            className="text-ink-faint hover:text-ink transition-colors rounded-full p-1 hover:bg-edge"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +95,7 @@ const isValid =
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-5">
             <div>
-              <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="title" className="block text-sm font-semibold text-ink-muted mb-1.5">
                 Lecture Title
               </label>
               <input
@@ -105,12 +105,12 @@ const isValid =
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Process Scheduling Algorithms"
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-signal/30 focus:border-signal transition-all placeholder:text-ink-faint"
               />
             </div>
 
             <div>
-              <label htmlFor="url" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="url" className="block text-sm font-semibold text-ink-muted mb-1.5">
                 Lecture URL
               </label>
               <input
@@ -120,12 +120,12 @@ const isValid =
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://youtube.com/watch?v=..."
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-signal/30 focus:border-signal transition-all placeholder:text-ink-faint"
               />
             </div>
 
             <div>
-              <label htmlFor="duration" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="duration" className="block text-sm font-semibold text-ink-muted mb-1.5">
                 Duration (minutes)
               </label>
               <input
@@ -136,13 +136,13 @@ const isValid =
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="45"
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-signal/30 focus:border-signal transition-all placeholder:text-ink-faint"
               />
             </div>
             <div>
   <label
     htmlFor="watchedMinutes"
-    className="block text-sm font-semibold text-gray-700 mb-1.5"
+    className="block text-sm font-semibold text-ink-muted mb-1.5"
   >
     Watched Minutes
   </label>
@@ -172,10 +172,10 @@ const isValid =
 }
     }}
     placeholder="0"
-    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+    className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-signal/30 focus:border-signal transition-all"
   />
 </div>
-<p className="text-xs text-gray-500 mt-1">
+<p className="text-xs text-ink-faint mt-1">
   Remaining: {Math.max(0, durationNum - watchedNum)} min
 </p>
 <div className="flex items-center">
@@ -197,33 +197,33 @@ const isValid =
 
   <label
     htmlFor="completed"
-    className="text-sm font-semibold text-gray-700"
+    className="text-sm font-semibold text-ink-muted"
   >
     Mark as Completed
   </label>
 </div>
 {!isValid && (
-  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm font-semibold text-red-600">
+  <div className="p-3 bg-stop/10 border border-stop/30 rounded-xl text-sm font-semibold text-stop">
     Watched minutes cannot exceed lecture duration.
   </div>
 )}
           </div>
 
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3">
+          <div className="px-6 py-4 bg-panel-raised border-t border-edge flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all shadow-sm"
+              className="px-5 py-2.5 text-sm font-semibold text-ink-muted bg-void-raised border border-edge rounded-xl hover:bg-panel-raised hover:border-edge-bright focus:outline-none focus:ring-2 focus:ring-edge transition-all shadow-sm"
             >
               Cancel
             </button>
             <button
   type="submit"
   disabled={!isValid}
-              className={`px-5 py-2.5 text-sm font-semibold text-white border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm ${
+              className={`px-5 py-2.5 text-sm font-semibold text-white border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-signal/50 transition-all shadow-sm ${
   isValid
-    ? "bg-blue-600 hover:bg-blue-700"
-    : "bg-blue-300 cursor-not-allowed"
+    ? "bg-signal hover:bg-signal-bright"
+    : "bg-signal/40 cursor-not-allowed"
 }`}
             >
               {initialData ? 'Update Lecture' : 'Save Lecture'}

@@ -1,3 +1,4 @@
+// src/db/lectureService.ts
 import { db } from "./index";
 import type { Resource } from "../types";
 
@@ -10,10 +11,21 @@ export interface LectureData {
   lastWatchedAt?: number;
 }
 
-export async function saveLecture(
+function computeLastWatchedAt(
+  watchedMinutes: number | undefined,
+  fallback?: number
+): number | undefined {
+  return watchedMinutes && watchedMinutes > 0 ? fallback ?? Date.now() : undefined;
+}
+
+/**
+ * Creates a new lecture resource for a topic. A topic can have multiple
+ * lectures (e.g. a primary teacher's lecture + a backup/revision video).
+ */
+export async function addLecture(
   topicId: string,
   lecture: LectureData
-): Promise<void> {
+): Promise<string> {
   const resource: Resource = {
     id: crypto.randomUUID(),
     topicId,
@@ -27,35 +39,27 @@ export async function saveLecture(
     durationMinutes: lecture.durationMinutes,
     watchedMinutes: lecture.watchedMinutes ?? 0,
     completed: lecture.completed ?? false,
-    lastWatchedAt:
-  lecture.watchedMinutes && lecture.watchedMinutes > 0
-    ? (lecture.lastWatchedAt ?? Date.now())
-    : undefined,
+    lastWatchedAt: computeLastWatchedAt(lecture.watchedMinutes, lecture.lastWatchedAt),
   };
 
   await db.resources.add(resource);
+  return resource.id;
 }
 
-export async function getLecture(
-  topicId: string
-): Promise<Resource | undefined> {
+/** Returns every lecture resource attached to a topic. */
+export async function getLecturesByTopic(topicId: string): Promise<Resource[]> {
   return db.resources
     .where("topicId")
     .equals(topicId)
     .filter((resource) => resource.type === "LECTURE")
-    .first();
+    .toArray();
 }
 
-export async function updateLecture(
-  topicId: string,
+/** Updates a specific lecture by its resource id. */
+export async function updateLectureById(
+  id: string,
   lecture: Partial<LectureData>
 ): Promise<number> {
-  const existingLecture = await getLecture(topicId);
-
-  if (!existingLecture) {
-    throw new Error(`Lecture not found for topic: ${topicId}`);
-  }
-
   const updates: Partial<Resource> = {
     ...(lecture.title !== undefined && { title: lecture.title }),
     ...(lecture.url !== undefined && { url: lecture.url }),
@@ -64,38 +68,25 @@ export async function updateLecture(
     }),
     ...(lecture.watchedMinutes !== undefined && {
       watchedMinutes: lecture.watchedMinutes,
+      lastWatchedAt: computeLastWatchedAt(lecture.watchedMinutes, lecture.lastWatchedAt),
     }),
     ...(lecture.completed !== undefined && {
       completed: lecture.completed,
     }),
-    ...(lecture.watchedMinutes !== undefined && {
-  lastWatchedAt:
-    lecture.watchedMinutes > 0
-      ? (lecture.lastWatchedAt ?? Date.now())
-      : undefined,
-}),
   };
 
-  return db.resources.update(existingLecture.id, updates);
+  return db.resources.update(id, updates);
 }
 
-export async function deleteLecture(
-  topicId: string
-): Promise<void> {
-  const existingLecture = await getLecture(topicId);
-
-  if (!existingLecture) return;
-
-  await db.resources.delete(existingLecture.id);
+/** Deletes a specific lecture by its resource id. */
+export async function deleteLectureById(id: string): Promise<void> {
+  await db.resources.delete(id);
 }
 
 /**
- * Returns all lecture resources.
- * Used by TodayTaskEngine.
+ * Returns all lecture resources across every topic.
+ * Used by TodayTaskEngine / AnalyticsEngine.
  */
 export async function getAllLectures(): Promise<Resource[]> {
-  return db.resources
-    .where('type')
-    .equals('LECTURE')
-    .toArray();
+  return db.resources.where("type").equals("LECTURE").toArray();
 }

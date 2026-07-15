@@ -1,6 +1,7 @@
 // src/engine/progressEngine.ts
 import { db } from "../db/index";
 import gateData from '../data/gate.json';
+import { calculateLectureSetProgress } from './lectureProgress';
 
 interface ProgressResult {
   progress: number;
@@ -33,18 +34,17 @@ export async function calculateSubjectProgress(subjectId: string): Promise<Progr
   let totalNotesScore = 0;
   let totalPyqScore = 0;
 
-  // 3. Calculate scores per topic
+  // 3. Calculate scores per topic (every topic counts, even untouched ones,
+  // so subject progress reflects the whole syllabus, not just started topics)
   for (const topicId of topicIds) {
     const topicResources = resources.filter((r) => r.topicId === topicId);
 
-    const lecture = topicResources.find((r) => r.type === 'LECTURE');
+    const lecture = topicResources.filter((r) => r.type === 'LECTURE');
     const notes = topicResources.find((r) => r.type === 'NOTES');
     const pyq = topicResources.find((r) => r.type === 'PYQ');
 
-    // Lecture Score (based on duration watched)
-    const duration = lecture?.durationMinutes || 0;
-    const watched = lecture?.watchedMinutes || 0;
-    const lectureScore = duration > 0 ? Math.min(100, (watched / duration) * 100) : 0;
+    // Lecture Score (averaged across all lectures for this topic, already 0-100)
+    const lectureScore = calculateLectureSetProgress(lecture);
 
     // Notes Score (binary)
     const notesScore = notes ? 100 : 0;
@@ -58,8 +58,8 @@ export async function calculateSubjectProgress(subjectId: string): Promise<Progr
   }
 
   const topicCount = topicIds.length;
-  
-  // 4. Calculate averages across all topics
+
+  // 4. Calculate averages across ALL topics in the subject
   const avgLecture = totalLectureScore / topicCount;
   const avgNotes = totalNotesScore / topicCount;
   const avgPyq = totalPyqScore / topicCount;

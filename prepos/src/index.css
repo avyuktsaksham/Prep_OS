@@ -1,1 +1,141 @@
 @import "tailwindcss";
+
+/*
+  ============================================================
+  PrepOS Design System — "Mission Control"
+  ------------------------------------------------------------
+  PrepOS is an operating system for exam prep, so the UI leans
+  into that: a dark systems-console backdrop, gauge-style radial
+  readouts, and a monospace data voice for anything numeric.
+  Blue = ordinary system state. Purple = the AI is speaking.
+  ============================================================
+*/
+
+@theme {
+  /* Surfaces */
+  --color-void: #0a0d16;
+  --color-void-raised: #0d1120;
+  --color-panel: #12151f;
+  --color-panel-raised: #191d2e;
+  --color-edge: #242939;
+  --color-edge-bright: #34394d;
+
+  /* Text */
+  --color-ink: #f3f5fa;
+  --color-ink-muted: #8b93a7;
+  --color-ink-faint: #565d72;
+
+  /* Accents */
+  --color-signal: #3b82f6;
+  --color-signal-bright: #60a5fa;
+  --color-pulse: #a855f7;
+  --color-pulse-bright: #c084fc;
+
+  /* Semantic */
+  --color-go: #22c55e;
+  --color-warn: #f59e0b;
+  --color-stop: #ef4444;
+
+  /* Type */
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.font-mono, .tabular-readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar — quiet, matches the console aesthetic */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-edge);
+  border-radius: 999px;
+  border: 2px solid var(--color-void);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-edge-bright);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-signal) 40%, transparent);
+  color: var(--color-ink);
+}
+
+/* Visible keyboard focus everywhere — accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--color-signal-bright);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-signal) 45%, transparent); }
+  50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-signal) 0%, transparent); }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2.2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Reusable surface patterns */
+.panel {
+  background-color: var(--color-panel);
+  border: 1px solid var(--color-edge);
+  border-radius: 1rem;
+}
+
+.panel-hover {
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.panel-hover:hover {
+  border-color: var(--color-edge-bright);
+}
+
+.grid-texture {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-signal) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-signal) 6%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+

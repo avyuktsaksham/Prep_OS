@@ -5,6 +5,7 @@ import { getAllNotes } from '../db/notesService';
 import { getAllPyqs } from '../db/pyqService';
 import { getAllRevisions } from '../db/revisionService';
 import { extractAllMistakes } from './mistakeEngine';
+import { calculateLectureSetProgress, areAllLecturesCompleted } from './lectureProgress';
 import type { TodayTask } from '../types';
 import {
   estimateLecture,
@@ -14,18 +15,18 @@ import {
   estimateMistake,
 } from "./estimateEngine";
 
-
 interface TopicMeta {
   topicId: string;
   topicName: string;
   subjectId: string;
   subjectName: string;
+  subjectWeightage: number;
 }
 
 // Utility to flatten the static curriculum for iteration
 function getAllTopics(): TopicMeta[] {
   const topics: TopicMeta[] = [];
-  const data = gateData as { subjects: { id: string; name: string; topics: { id: string; name: string }[] }[] };
+  const data = gateData as { subjects: { id: string; name: string; weightage: number; topics: { id: string; name: string }[] }[] };
   
   data.subjects.forEach((subject) => {
     subject.topics.forEach((topic) => {
@@ -34,6 +35,7 @@ function getAllTopics(): TopicMeta[] {
         topicName: topic.name,
         subjectId: subject.id,
         subjectName: subject.name,
+        subjectWeightage: subject.weightage || 0,
       });
     });
   });
@@ -54,10 +56,18 @@ export async function getTodayTasks(): Promise<TodayTask[]> {
   ]);
 
   // Create fast lookup maps
-  const lectureMap = new Map(allLectures.map(r => [r.topicId, r]));
+  const lectureMap = new Map<string, typeof allLectures>();
+  allLectures.forEach(l => {
+    const existing = lectureMap.get(l.topicId) ?? [];
+    existing.push(l);
+    lectureMap.set(l.topicId, existing);
+  });
   const notesMap = new Map(allNotes.map(r => [r.topicId, r]));
   const pyqMap = new Map(allPyqs.map(r => [r.topicId, r]));
   const revisionMap = new Map(allRevisions.map(r => [r.topicId, r]));
+
+  // Store calculated yield scores for sorting later
+  const topicYieldScore = new Map<string, number>();
 
   const dueRevisions: TodayTask[] = [];
   const pendingLectures: TodayTask[] = [];
@@ -66,10 +76,29 @@ export async function getTodayTasks(): Promise<TodayTask[]> {
   const dueMistakes: TodayTask[] = [];
 
   for (const t of topics) {
-    const lecture = lectureMap.get(t.topicId);
+    const lectures = lectureMap.get(t.topicId) ?? [];
     const notes = notesMap.get(t.topicId);
     const pyq = pyqMap.get(t.topicId);
     const revision = revisionMap.get(t.topicId);
+
+    // --- WEIGHTAGE-AWARE PRIORITY CALCULATION (40/30/30) ---
+    // 1. Lecture Progress (averaged across all lectures for this topic)
+    const lectureProgressPct = calculateLectureSetProgress(lectures);
+    const isLectureCompleted = areAllLecturesCompleted(lectures);
+    let topicProgress = lectureProgressPct * 0.4;
+    
+    // 2. Notes Progress
+    if (notes) topicProgress += 30;
+    
+    // 3. PYQ Progress (accuracy is already stored 0-100 on the resource)
+    if (pyq && (pyq.totalQuestions || 0) > 0) {
+      topicProgress += 30 * ((pyq.accuracy || 0) / 100);
+    }
+    
+    // Formula: Weightage * Remaining Progress
+    const yieldScore = t.subjectWeightage * (100 - topicProgress);
+    topicYieldScore.set(t.topicId, yieldScore);
+    // -------------------------------------------------------
 
     // 1. Due Revisions
     if (revision && revision.nextReviewDate <= now) {
@@ -85,51 +114,36 @@ export async function getTodayTasks(): Promise<TodayTask[]> {
     }
 
     // 2. Pending Lectures
-    const isActive =
-  !!lecture ||
-  !!notes ||
-  !!pyq ||
-  !!revision;
+    const isActive = lectures.length > 0 || !!notes || !!pyq || !!revision;
 
-if (isActive) {
-  if (!lecture) {
-    pendingLectures.push({
-      id: `${t.topicId}-LECTURE`,
-      ...t,
-      type: "LECTURE",
-      priority: 2,
-      title: "Start Lecture",
-      actionLabel: "Start",
-      estimatedMinutes: estimateLecture(lecture ?? undefined)
-    });
-  } else {
-    const duration = lecture.durationMinutes || 0;
-    const watched = lecture.watchedMinutes || 0;
-
-    const isCompleted =
-      lecture.completed ||
-      (duration > 0 && watched >= duration);
-
-    if (!isCompleted) {
-      pendingLectures.push({
-        id: `${t.topicId}-LECTURE`,
-        ...t,
-        type: "LECTURE",
-        priority: 2,
-        title: "Resume Lecture",
-        actionLabel: "Continue",
-        estimatedMinutes: estimateLecture(lecture)
-      });
+    if (isActive) {
+      if (lectures.length === 0) {
+        pendingLectures.push({
+          id: `${t.topicId}-LECTURE`,
+          ...t,
+          type: "LECTURE",
+          priority: 2,
+          title: "Start Lecture",
+          actionLabel: "Start",
+          estimatedMinutes: estimateLecture(undefined)
+        });
+      } else if (!isLectureCompleted) {
+        // Find the first incomplete lecture to base the estimate/label on
+        const incomplete = lectures.find((l) => !(l.completed || ((l.durationMinutes || 0) > 0 && (l.watchedMinutes || 0) >= (l.durationMinutes || 0))));
+        pendingLectures.push({
+          id: `${t.topicId}-LECTURE`,
+          ...t,
+          type: "LECTURE",
+          priority: 2,
+          title: lectures.length > 1 ? "Resume Lectures" : "Resume Lecture",
+          actionLabel: "Continue",
+          estimatedMinutes: estimateLecture(incomplete)
+        });
+      }
     }
-  }
-}
 
     // 3. Missing Notes
-    // Only flag missing notes if the topic has been actively started
-    if (
-    lecture?.completed &&
-    !notes
-) {
+    if (isLectureCompleted && !notes) {
       missingNotes.push({
         id: `${t.topicId}-NOTES`,
         ...t,
@@ -142,12 +156,7 @@ if (isActive) {
     }
 
     // 4. Pending PYQs
-    // Only flag pending PYQs if the topic is active but PYQ is missing or 0
-    if (
-    lecture?.completed &&
-    notes &&
-    (!pyq || pyq.totalQuestions === 0)
-) {
+    if (isLectureCompleted && notes && (!pyq || (pyq.totalQuestions || 0) === 0)) {
       pendingPyqs.push({
         id: `${t.topicId}-PYQ`,
         ...t,
@@ -159,59 +168,54 @@ if (isActive) {
       });
     }
   }
+
   // 5. Due Mistakes
-const extractedMistakes = extractAllMistakes(allPyqs);
+  const extractedMistakes = extractAllMistakes(allPyqs);
 
-for (const mistake of extractedMistakes) {
-  if (
-    mistake.status === "PENDING" &&
-    mistake.nextReviewDate <= now
-  ) {
-    const topic = topics.find(
-      t => t.topicId === mistake.topicId
-    );
+  for (const mistake of extractedMistakes) {
+    if (mistake.status === "PENDING" && mistake.nextReviewDate <= now) {
+      const topic = topics.find(t => t.topicId === mistake.topicId);
+      if (!topic) continue;
 
-    if (!topic) continue;
-
-    dueMistakes.push({
-      id: `${mistake.id}-MISTAKE`,
-      ...topic,
-      type: "MISTAKE",
-      priority: 2,
-      title: "Review Mistake",
-      actionLabel: "Review",
-      estimatedMinutes: estimateMistake()
-    });
+      dueMistakes.push({
+        id: `${mistake.id}-MISTAKE`,
+        ...topic,
+        type: "MISTAKE",
+        priority: 2,
+        title: "Review Mistake",
+        actionLabel: "Review",
+        estimatedMinutes: estimateMistake()
+      });
+    }
   }
-}
 
-// --------------------------------------------
-// Remove duplicate lecture tasks if a mistake
-// review already exists for the same topic.
-// --------------------------------------------
-
-const mistakeTopicIds = new Set(
-  dueMistakes.map(task => task.topicId)
-);
-
-const filteredLectures = pendingLectures.filter(
-  task => !mistakeTopicIds.has(task.topicId)
-);
+  const mistakeTopicIds = new Set(dueMistakes.map(task => task.topicId));
+  const filteredLectures = pendingLectures.filter(task => !mistakeTopicIds.has(task.topicId));
 
   const allTasks = [
-  ...dueRevisions,
-  ...filteredLectures,
-  ...dueMistakes,
-  ...missingNotes,
-  ...pendingPyqs
-];
+    ...dueRevisions,
+    ...filteredLectures,
+    ...dueMistakes,
+    ...missingNotes,
+    ...pendingPyqs
+  ];
   
-  // Ascending sort (1 is highest priority)
+  // FINAL SORTING
   return allTasks.sort((a, b) => {
-  if (a.priority !== b.priority) {
-    return a.priority - b.priority;
-  }
+    // Primary Sort: By static priority (1 > 2 > 3 > 4)
+    if (a.priority !== b.priority) {
+      return a.priority - b.priority; 
+    }
 
-  return a.subjectName.localeCompare(b.subjectName);
-});
+    // Secondary Sort: The Magic Formula (Weightage * Remaining Progress)
+    const yieldA = topicYieldScore.get(a.topicId) ?? 0;
+    const yieldB = topicYieldScore.get(b.topicId) ?? 0;
+
+    if (yieldB !== yieldA) {
+      return yieldB - yieldA; // Descending: Highest yield comes first
+    }
+
+    // Fallback: Alphabetical
+    return a.subjectName.localeCompare(b.subjectName);
+  });
 }

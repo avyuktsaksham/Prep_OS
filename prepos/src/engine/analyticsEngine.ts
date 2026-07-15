@@ -5,6 +5,7 @@ import { getAllNotes } from '../db/notesService';
 import { getAllPyqs } from '../db/pyqService';
 import { getAllRevisions } from '../db/revisionService';
 import { extractAllMistakes } from './mistakeEngine';
+import { calculateLectureSetProgress, sumWatchedMinutes } from './lectureProgress';
 import type { 
   AnalyticsSnapshot, 
   SubjectMetrics, 
@@ -16,6 +17,7 @@ import type {
 interface GateSubject {
   id: string;
   name: string;
+  weightage: number;
   topics: { id: string; name: string }[];
 }
 
@@ -25,12 +27,16 @@ function buildResourceMaps(
   pyqs: Resource[], 
   revisions: Revision[]
 ) {
-  const lectureMap = new Map<string, Resource>();
+  const lectureMap = new Map<string, Resource[]>();
   const notesMap = new Map<string, Resource>();
   const pyqMap = new Map<string, Resource>();
   const revisionMap = new Map<string, Revision>();
 
-  lectures.forEach(l => lectureMap.set(l.topicId, l));
+  lectures.forEach(l => {
+    const existing = lectureMap.get(l.topicId) ?? [];
+    existing.push(l);
+    lectureMap.set(l.topicId, existing);
+  });
   notes.forEach(n => notesMap.set(n.topicId, n));
   pyqs.forEach(p => pyqMap.set(p.topicId, p));
   revisions.forEach(r => revisionMap.set(r.topicId, r));
@@ -58,20 +64,18 @@ function calculateSubjectMetrics(
   let studyTimeMinutes = 0;
 
   subject.topics.forEach(topic => {
-    const lecture = maps.lectureMap.get(topic.id);
+    const lecture = maps.lectureMap.get(topic.id) ?? [];
     const notes = maps.notesMap.get(topic.id);
     const pyq = maps.pyqMap.get(topic.id);
 
     // Compute component progress using existing Resource fields
-    const lecProg = lecture 
-      ? (lecture.completed ? 100 : (lecture.durationMinutes ? Math.min(100, Math.round(((lecture.watchedMinutes || 0) / lecture.durationMinutes) * 100)) : 0)) 
-      : 0;
+    // Matches docs/04_FORMULAS.md and topicProgressEngine.ts exactly
+    const lecProg = calculateLectureSetProgress(lecture);
     const notProg = notes ? 100 : 0;
-    const pyqProg = (pyq && (pyq.totalQuestions || 0) > 0) ? 100 : 0;
+    const pyqProg = pyq?.accuracy || 0;
 
-    // Calculate topic progress locally to avoid dependency issues with topicProgressEngine
-    // Standard PrepOS weightage: Lecture (40%), Notes (20%), PYQ (40%)
-    const topicProg = Math.round((lecProg * 0.4) + (notProg * 0.2) + (pyqProg * 0.4));
+    // Standard PrepOS weightage: Lecture (40%), Notes (30%), PYQ (30%)
+    const topicProg = Math.round((lecProg * 0.4) + (notProg * 0.3) + (pyqProg * 0.3));
 
     sumSubjectProgress += topicProg;
     sumLectureProgress += lecProg;
@@ -82,9 +86,7 @@ function calculateSubjectMetrics(
       completedTopics++;
     }
 
-    if (lecture && lecture.watchedMinutes) {
-      studyTimeMinutes += lecture.watchedMinutes;
-    }
+    studyTimeMinutes += sumWatchedMinutes(lecture);
 
     if (pyq) {
       totalQuestions += pyq.totalQuestions || 0;
@@ -95,7 +97,7 @@ function calculateSubjectMetrics(
   return {
     subjectId: subject.id,
     subjectName: subject.name,
-    weightage: 0, // Fallback since weightage does not exist in gate.json
+    weightage: subject.weightage ?? 0,
     totalTopics,
     completedTopics,
     subjectProgress: totalTopics > 0 ? Math.round(sumSubjectProgress / totalTopics) : 0,

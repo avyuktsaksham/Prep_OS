@@ -25,25 +25,25 @@ export default function RevisionModal({ open, onClose, onSave }: RevisionModalPr
   };
 
   const ratings = [
-    { value: 0, label: 'Blackout', desc: 'Complete blank, forgot entirely', color: 'text-red-600' },
+    { value: 0, label: 'Blackout', desc: 'Complete blank, forgot entirely', color: 'text-stop' },
     { value: 1, label: 'Bad', desc: 'Familiar, but answered incorrectly', color: 'text-orange-600' },
     { value: 2, label: 'Hard', desc: 'Incorrect, but recalled easily upon seeing answer', color: 'text-amber-600' },
-    { value: 3, label: 'Good', desc: 'Correct, but required significant effort', color: 'text-blue-600' },
+    { value: 3, label: 'Good', desc: 'Correct, but required significant effort', color: 'text-signal-bright' },
     { value: 4, label: 'Easy', desc: 'Correct, after slight hesitation', color: 'text-indigo-600' },
-    { value: 5, label: 'Perfect', desc: 'Correct, instant and effortless recall', color: 'text-green-600' },
+    { value: 5, label: 'Perfect', desc: 'Correct, instant and effortless recall', color: 'text-go' },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden scale-in-95 animate-in zoom-in-95 duration-200"
+        className="bg-void-raised w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden scale-in-95 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Log Revision Session</h2>
+        <div className="px-6 py-4 border-b border-edge flex items-center justify-between">
+          <h2 className="text-xl font-bold text-ink">Log Revision Session</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"
+            className="text-ink-faint hover:text-ink transition-colors rounded-full p-1 hover:bg-edge"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@ export default function RevisionModal({ open, onClose, onSave }: RevisionModalPr
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-6">
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">
+              <h3 className="text-sm font-semibold text-ink-muted mb-4">
                 How well did you remember this topic? (SM-2 Quality Rating)
               </h3>
               
@@ -67,19 +67,19 @@ export default function RevisionModal({ open, onClose, onSave }: RevisionModalPr
                     onClick={() => setQualityRating(rating.value)}
                     className={`flex flex-col items-start p-4 rounded-xl border transition-all text-left ${
                       qualityRating === rating.value
-                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 shadow-sm'
-                        : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'bg-signal/10 border-signal ring-1 ring-signal shadow-sm'
+                        : 'bg-void-raised border-edge hover:border-edge-bright hover:bg-panel-raised'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-600">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-panel-raised text-xs font-bold text-ink-muted">
                         {rating.value}
                       </span>
-                      <span className={`text-sm font-bold ${qualityRating === rating.value ? rating.color : 'text-gray-900'}`}>
+                      <span className={`text-sm font-bold ${qualityRating === rating.value ? rating.color : 'text-ink'}`}>
                         {rating.label}
                       </span>
                     </div>
-                    <p className="text-xs font-medium text-gray-500 leading-relaxed">
+                    <p className="text-xs font-medium text-ink-faint leading-relaxed">
                       {rating.desc}
                     </p>
                   </button>
@@ -88,17 +88,17 @@ export default function RevisionModal({ open, onClose, onSave }: RevisionModalPr
             </div>
           </div>
 
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3">
+          <div className="px-6 py-4 bg-panel-raised border-t border-edge flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all shadow-sm"
+              className="px-5 py-2.5 text-sm font-semibold text-ink-muted bg-void-raised border border-edge rounded-xl hover:bg-panel-raised hover:border-edge-bright focus:outline-none focus:ring-2 focus:ring-edge transition-all shadow-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 border border-transparent rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-signal border border-transparent rounded-xl hover:bg-signal-bright focus:outline-none focus:ring-2 focus:ring-signal/50 transition-all shadow-sm"
             >
               Log Revision
             </button>

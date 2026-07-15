@@ -70,16 +70,16 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden scale-in-95 animate-in zoom-in-95 duration-200"
+        className="bg-void-raised w-full max-w-md rounded-2xl shadow-2xl overflow-hidden scale-in-95 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="px-6 py-4 border-b border-edge flex items-center justify-between">
+          <h2 className="text-xl font-bold text-ink">
             {initialData ? 'Edit PYQ Progress' : 'Add PYQ Progress'}
           </h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"
+            className="text-ink-faint hover:text-ink transition-colors rounded-full p-1 hover:bg-edge"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-5">
             <div>
-              <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="title" className="block text-sm font-semibold text-ink-muted mb-1.5">
                 PYQ Title (Optional)
               </label>
               <input
@@ -100,13 +100,13 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. GATE 2015-2023"
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-signal/30 focus:border-signal transition-all placeholder:text-ink-faint"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="sm:col-span-2">
-                <label htmlFor="totalQuestions" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label htmlFor="totalQuestions" className="block text-sm font-semibold text-ink-muted mb-1.5">
                   Total Questions
                 </label>
                 <input
@@ -117,12 +117,12 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
                   value={totalQuestions}
                   onChange={(e) => setTotalQuestions(e.target.value)}
                   placeholder="e.g. 50"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                  className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-signal/30 focus:border-signal transition-all placeholder:text-ink-faint"
                 />
               </div>
 
               <div>
-                <label htmlFor="correct" className="block text-sm font-semibold text-gray-700 mb-1.5 text-green-600">
+                <label htmlFor="correct" className="block text-sm font-semibold text-ink-muted mb-1.5 text-go">
                   Correct Answers
                 </label>
                 <input
@@ -133,12 +133,12 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
                   value={correct}
                   onChange={(e) => setCorrect(e.target.value)}
                   placeholder="0"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all placeholder:text-gray-400"
+                  className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all placeholder:text-ink-faint"
                 />
               </div>
 
               <div>
-                <label htmlFor="incorrect" className="block text-sm font-semibold text-gray-700 mb-1.5 text-red-600">
+                <label htmlFor="incorrect" className="block text-sm font-semibold text-ink-muted mb-1.5 text-stop">
                   Incorrect Answers
                 </label>
                 <input
@@ -149,13 +149,13 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
                   value={incorrect}
                   onChange={(e) => setIncorrect(e.target.value)}
                   placeholder="0"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all placeholder:text-gray-400"
+                  className="w-full px-4 py-2.5 bg-panel-raised border border-edge rounded-xl text-sm text-ink focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all placeholder:text-ink-faint"
                 />
               </div>
             </div>
 
             {!isValid && (
-              <div className="p-4 bg-red-50 rounded-xl border border-red-200 text-sm font-semibold text-red-600">
+              <div className="p-4 bg-stop/10 rounded-xl border border-stop/30 text-sm font-semibold text-stop">
                 Correct + Incorrect answers cannot exceed Total Questions.
               </div>
             )}
@@ -168,19 +168,19 @@ export default function PyqModal({ open, onClose, onSave, initialData }: PyqModa
             )}
           </div>
 
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3">
+          <div className="px-6 py-4 bg-panel-raised border-t border-edge flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all shadow-sm"
+              className="px-5 py-2.5 text-sm font-semibold text-ink-muted bg-void-raised border border-edge rounded-xl hover:bg-panel-raised hover:border-edge-bright focus:outline-none focus:ring-2 focus:ring-edge transition-all shadow-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!isValid}
-              className={`px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm ${
-                !isValid ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+              className={`px-5 py-2.5 text-sm font-semibold text-white bg-signal border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-signal/50 transition-all shadow-sm ${
+                !isValid ? 'opacity-50 cursor-not-allowed' : 'hover:bg-signal-bright'
               }`}
             >
               {initialData ? 'Update PYQs' : 'Save PYQs'}

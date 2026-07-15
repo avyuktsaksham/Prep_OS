@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { getLecture } from "../db/lectureService";
+import { getLecturesByTopic } from "../db/lectureService";
 import type { Resource } from "../types";
 
 export function useLecture(topicId: string) {
-  const [lecture, setLecture] = useState<Resource | null>(null);
+  const [lectures, setLectures] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
     setLoading(true);
 
-    const data = await getLecture(topicId);
+    const data = await getLecturesByTopic(topicId);
 
-    setLecture(data ?? null);
+    setLectures(data ?? []);
     setLoading(false);
   };
 
@@ -20,7 +20,7 @@ export function useLecture(topicId: string) {
   }, [topicId]);
 
   return {
-    lecture,
+    lectures,
     loading,
     refresh,
   };
