@@ -3,6 +3,13 @@
 const GEMINI_MODEL = 'gemini-flash-latest';
 const DIRECT_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+const MAX_RETRIES = 2;
+const RETRY_DELAYS_MS = [1000, 3000];
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Sends a prompt to Gemini and returns the plain-text response.
  *
@@ -11,12 +18,32 @@ const DIRECT_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models
  * - In production builds, calls our own `/api/gemini` serverless proxy
  *   instead, so the real API key stays server-side and is never bundled
  *   into the browser JS that gets deployed publicly.
+ *
+ * Transient errors (503 "model overloaded", network hiccups) are retried
+ * automatically with backoff before surfacing an error to the person.
  */
 export async function askGemini(prompt: string): Promise<string> {
-  if (import.meta.env.DEV) {
-    return askGeminiDirect(prompt);
+  const call = import.meta.env.DEV ? askGeminiDirect : askGeminiViaProxy;
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await call(prompt);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      lastError = error;
+
+      const isRetryable = /503|UNAVAILABLE|overloaded|high demand/i.test(error.message);
+      if (!isRetryable || attempt === MAX_RETRIES) {
+        throw error;
+      }
+
+      await sleep(RETRY_DELAYS_MS[attempt] ?? 3000);
+    }
   }
-  return askGeminiViaProxy(prompt);
+
+  throw lastError ?? new Error('Gemini request failed.');
 }
 
 async function askGeminiDirect(prompt: string): Promise<string> {

@@ -12,7 +12,9 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
   }
 
-  const apiKey = (globalThis as any).process?.env?.GEMINI_API_KEY;
+  // Access environment variable without referencing the Node 'process' symbol
+  // directly (not available in all runtimes, e.g. Edge). Falls back safely.
+  const apiKey = (globalThis as any).process?.env?.GEMINI_API_KEY || (globalThis as any).GEMINI_API_KEY;
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: 'Server is missing GEMINI_API_KEY. Add it in Vercel project settings.' }),
