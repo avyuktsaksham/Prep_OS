@@ -19,6 +19,7 @@ import WeakSubjectAlerts from '../components/cards/WeakSubjectAlerts';
 import DailyStudyChart from '../components/cards/DailyStudyChart';
 import StudyHeatmap from '../components/cards/StudyHeatmap';
 import FocusNextActions from '../components/cards/FocusNextActions';
+import TodayRevisionReminder from '../components/cards/TodayRevisionReminder';
 
 interface Topic { id: string; name: string; }
 interface Subject { id: string; name: string; weightage: number; topics: Topic[]; }
@@ -265,6 +266,8 @@ export default function Dashboard() {
       </header>
 
       <FocusNextActions tasks={todayTasks} />
+
+      <TodayRevisionReminder />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
         <div className="lg:col-span-2">

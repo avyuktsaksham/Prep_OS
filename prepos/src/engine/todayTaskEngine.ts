@@ -11,7 +11,7 @@ import {
   estimateLecture,
   estimateNotes,
   estimatePyq,
-  estimateRevision,
+  estimateRevisionTime,
   estimateMistake,
 } from "./estimateEngine";
 
@@ -109,7 +109,7 @@ export async function getTodayTasks(): Promise<TodayTask[]> {
         priority: 1,
         title: 'Spaced Repetition Due',
         actionLabel: 'Review Now',
-        estimatedMinutes: estimateRevision()
+        estimatedMinutes: estimateRevisionTime(revision)
       });
     }
 
