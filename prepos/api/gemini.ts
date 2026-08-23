@@ -4,8 +4,7 @@
 
 export const config = { runtime: 'edge' };
 
-const GEMINI_MODEL = 'gemini-flash-latest';
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
@@ -23,9 +22,11 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   let prompt: string;
+  let model: string;
   try {
     const body = await req.json();
     prompt = body.prompt;
+    model = typeof body.model === 'string' && body.model ? body.model : DEFAULT_MODEL;
     if (!prompt || typeof prompt !== 'string') {
       throw new Error('Missing prompt');
     }
@@ -33,8 +34,10 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Invalid request body.' }), { status: 400 });
   }
 
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
   try {
-    const geminiRes = await fetch(GEMINI_ENDPOINT, {
+    const geminiRes = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

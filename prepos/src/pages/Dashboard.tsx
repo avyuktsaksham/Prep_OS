@@ -4,12 +4,11 @@ import { Link } from 'react-router-dom';
 import {
   Sparkles, Brain, Sigma, Binary, CircuitBoard, Cpu, Code2,
   GitBranch, Layers, Terminal, Server, Database, Network,
-  Play, Pause, Square, Flame, Clock, Target, CalendarClock,
+  Flame, Clock, Target, CalendarClock,
 } from 'lucide-react';
 import gateData from '../data/gate.json';
 import { useSubjectProgress } from '../hooks/useSubjectProgress';
 import { useTodayTasks } from '../hooks/useTodayTasks';
-import { supabase } from '../lib/supabaseClient';
 import { useTodayFocusTime } from '../hooks/useTodayFocusTime';
 import { useStreak } from '../hooks/useStreak';
 import { useAnalytics } from '../hooks/useAnalytics';
@@ -20,6 +19,7 @@ import DailyStudyChart from '../components/cards/DailyStudyChart';
 import StudyHeatmap from '../components/cards/StudyHeatmap';
 import FocusNextActions from '../components/cards/FocusNextActions';
 import TodayRevisionReminder from '../components/cards/TodayRevisionReminder';
+import StudyTimer from '../components/cards/StudyTimer';
 
 interface Topic { id: string; name: string; }
 interface Subject { id: string; name: string; weightage: number; topics: Topic[]; }
@@ -43,134 +43,6 @@ const SUBJECT_STYLE: Record<string, { icon: typeof Brain; text: string; bg: stri
 };
 
 const DEFAULT_STYLE = { icon: Sparkles, text: 'text-ink-muted', bg: 'bg-panel-raised', bar: 'from-signal to-pulse' };
-
-function formatTime(totalSeconds: number) {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
-
-function FocusBanner({ onSessionSave }: { onSessionSave: () => void }) {
-  const [time, setTime] = useState(() => {
-    const savedTime = localStorage.getItem('prepos_timer');
-    return savedTime ? parseInt(savedTime, 10) : 0;
-  });
-
-  const [isRunning, setIsRunning] = useState(() => {
-    return localStorage.getItem('prepos_timer_running') === 'true';
-  });
-
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('prepos_timer', time.toString());
-    localStorage.setItem('prepos_timer_running', isRunning.toString());
-  }, [time, isRunning]);
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isRunning) {
-      interval = setInterval(() => setTime((prev) => prev + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning]);
-
-  const handleStop = async () => {
-    setIsRunning(false);
-    if (time > 0) {
-      setIsSaving(true);
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError) console.error('Auth Error:', authError);
-
-        const { error: dbError } = await supabase.from('prepos_sessions').insert([
-          { user_email: user?.email || 'unknown', duration_seconds: time },
-        ]);
-        if (dbError) throw dbError;
-
-        setTimeout(() => {
-          alert(`🔥 Session Saved! You focused for ${formatTime(time)}.`);
-        }, 100);
-
-        setTime(0);
-        localStorage.removeItem('prepos_timer');
-        localStorage.removeItem('prepos_timer_running');
-
-        window.dispatchEvent(new Event('prepos:session-saved'));
-        onSessionSave();
-      } catch (error) {
-        console.error('Error saving session:', error);
-        alert(`⚠️ Could not save to cloud, but you focused for ${formatTime(time)}.`);
-      } finally {
-        setIsSaving(false);
-      }
-    }
-  };
-
-  return (
-    <div className="panel grid-texture p-6 md:p-8 relative overflow-hidden">
-      <div className="flex items-center gap-2.5 mb-1">
-        {isRunning ? (
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-stop opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-stop" />
-          </span>
-        ) : (
-          <span className="h-2.5 w-2.5 rounded-full bg-ink-faint" />
-        )}
-        <span className="text-xs font-bold tracking-widest uppercase text-ink-muted">
-          {isRunning ? 'Live Session' : 'Session Idle'}
-        </span>
-      </div>
-
-      <div
-        className={`font-mono tabular-readout text-5xl md:text-7xl font-bold tracking-tight text-center py-6 ${
-          isRunning ? 'text-signal-bright' : 'text-ink'
-        }`}
-        style={isRunning ? { textShadow: '0 0 30px color-mix(in srgb, var(--color-signal) 55%, transparent)' } : undefined}
-      >
-        {formatTime(time)}
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
-        {!isRunning ? (
-          <button
-            onClick={() => setIsRunning(true)}
-            disabled={isSaving}
-            className="flex items-center gap-2 bg-gradient-to-r from-signal to-pulse text-white px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <Play className="w-4 h-4 fill-current" />
-            {time > 0 ? 'Resume' : 'Start Grind'}
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsRunning(false)}
-            className="flex items-center gap-2 bg-warn text-void px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-opacity"
-          >
-            <Pause className="w-4 h-4 fill-current" />
-            Pause
-          </button>
-        )}
-
-        {(time > 0 || isRunning) && (
-          <button
-            onClick={handleStop}
-            disabled={isSaving}
-            className="flex items-center gap-2 bg-panel-raised hover:bg-edge text-ink px-4 py-2.5 rounded-xl font-bold transition-colors disabled:opacity-50"
-          >
-            {isSaving ? (
-              <span className="animate-spin h-4 w-4 border-2 border-ink border-t-transparent rounded-full" />
-            ) : (
-              <Square className="w-4 h-4 text-stop fill-current" />
-            )}
-            {isSaving ? 'Saving...' : 'Finish'}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function StatCard({
   icon: Icon, label, value, accent, sublabel,
@@ -271,7 +143,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
         <div className="lg:col-span-2">
-          <FocusBanner onSessionSave={handleSessionSave} />
+          <StudyTimer onSessionSave={handleSessionSave} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
