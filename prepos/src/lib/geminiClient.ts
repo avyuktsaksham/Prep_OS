@@ -12,6 +12,11 @@ const MODEL_CANDIDATES = [
 const MAX_RETRIES = 2;
 const RETRY_DELAYS_MS = [1000, 3000];
 
+export interface GeminiImage {
+  base64: string; // no "data:...;base64," prefix
+  mimeType: string;
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -24,28 +29,15 @@ function isModelUnavailableError(message: string): boolean {
   return /404|no longer available|NOT_FOUND/i.test(message);
 }
 
-/**
- * Sends a prompt to Gemini and returns the plain-text response.
- *
- * - In local dev (`npm run dev`), calls Google directly using the
- *   VITE_GEMINI_API_KEY from .env.local — simplest for local testing.
- * - In production builds, calls our own `/api/gemini` serverless proxy
- *   instead, so the real API key stays server-side and is never bundled
- *   into the browser JS that gets deployed publicly.
- *
- * Transient errors (503 "model overloaded") are retried with backoff.
- * If a model name itself is retired (404 "no longer available"), the
- * next candidate model is tried automatically.
- */
-export async function askGemini(prompt: string): Promise<string> {
-  const call = import.meta.env.DEV ? askGeminiDirect : askGeminiViaProxy;
-
+async function runWithFallback(
+  call: (model: string) => Promise<string>
+): Promise<string> {
   let lastError: Error | null = null;
 
   for (const model of MODEL_CANDIDATES) {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        return await call(prompt, model);
+        return await call(model);
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Unknown error');
         lastError = error;
@@ -67,7 +59,34 @@ export async function askGemini(prompt: string): Promise<string> {
   throw lastError ?? new Error('Gemini request failed.');
 }
 
-async function askGeminiDirect(prompt: string, model: string): Promise<string> {
+/**
+ * Sends a text prompt to Gemini and returns the plain-text response.
+ *
+ * - In local dev (`npm run dev`), calls Google directly using the
+ *   VITE_GEMINI_API_KEY from .env.local — simplest for local testing.
+ * - In production builds, calls our own `/api/gemini` serverless proxy
+ *   instead, so the real API key stays server-side and is never bundled
+ *   into the browser JS that gets deployed publicly.
+ *
+ * Transient errors (503 "model overloaded") are retried with backoff.
+ * If a model name itself is retired (404 "no longer available"), the
+ * next candidate model is tried automatically.
+ */
+export async function askGemini(prompt: string): Promise<string> {
+  const call = import.meta.env.DEV ? askGeminiDirect : askGeminiViaProxy;
+  return runWithFallback((model) => call(prompt, model));
+}
+
+/**
+ * Same as askGemini, but also attaches an image (e.g. a screenshot) for
+ * Gemini's vision capability to read alongside the text prompt.
+ */
+export async function askGeminiWithImage(prompt: string, image: GeminiImage): Promise<string> {
+  const call = import.meta.env.DEV ? askGeminiDirect : askGeminiViaProxy;
+  return runWithFallback((model) => call(prompt, model, image));
+}
+
+async function askGeminiDirect(prompt: string, model: string, image?: GeminiImage): Promise<string> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -76,6 +95,11 @@ async function askGeminiDirect(prompt: string, model: string): Promise<string> {
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
+  const parts: Record<string, unknown>[] = [{ text: prompt }];
+  if (image) {
+    parts.unshift({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -83,7 +107,7 @@ async function askGeminiDirect(prompt: string, model: string): Promise<string> {
       'x-goog-api-key': apiKey,
     },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ role: 'user', parts }],
     }),
   });
 
@@ -105,11 +129,11 @@ async function askGeminiDirect(prompt: string, model: string): Promise<string> {
   return text;
 }
 
-async function askGeminiViaProxy(prompt: string, model: string): Promise<string> {
+async function askGeminiViaProxy(prompt: string, model: string, image?: GeminiImage): Promise<string> {
   const response = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, model }),
+    body: JSON.stringify({ prompt, model, image }),
   });
 
   const data = await response.json();

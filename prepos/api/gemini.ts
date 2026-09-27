@@ -23,10 +23,12 @@ export default async function handler(req: Request): Promise<Response> {
 
   let prompt: string;
   let model: string;
+  let image: { base64: string; mimeType: string } | undefined;
   try {
     const body = await req.json();
     prompt = body.prompt;
     model = typeof body.model === 'string' && body.model ? body.model : DEFAULT_MODEL;
+    image = body.image;
     if (!prompt || typeof prompt !== 'string') {
       throw new Error('Missing prompt');
     }
@@ -36,6 +38,11 @@ export default async function handler(req: Request): Promise<Response> {
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
+  const parts: Record<string, unknown>[] = [{ text: prompt }];
+  if (image?.base64 && image?.mimeType) {
+    parts.unshift({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
+  }
+
   try {
     const geminiRes = await fetch(endpoint, {
       method: 'POST',
@@ -44,7 +51,7 @@ export default async function handler(req: Request): Promise<Response> {
         'x-goog-api-key': apiKey,
       },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts }],
       }),
     });
 

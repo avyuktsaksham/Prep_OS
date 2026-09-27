@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import gateData from '../data/gate.json';
 import TopicCard from '../components/cards/TopicCard';
 import { useSubjectProgress } from '../hooks/useSubjectProgress';
+import ImportLecturesModal from '../components/modals/ImportLecturesModal';
 
 interface Topic {
   id: string;
@@ -17,7 +20,8 @@ interface Subject {
 
 export default function SubjectPage() {
   const { id } = useParams<{ id: string }>();
-  
+  const [isImportOpen, setIsImportOpen] = useState(false);
+
   const subject = (gateData.subjects as Subject[]).find((s) => s.id === id);
   const { progress } = useSubjectProgress(id ?? '');
 
@@ -34,10 +38,17 @@ export default function SubjectPage() {
 
   return (
     <div className="max-w-5xl mx-auto animate-fade-in">
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <Link to="/" className="text-sm font-medium text-ink-faint hover:text-ink transition-colors">
           &larr; Back to Dashboard
         </Link>
+        <button
+          onClick={() => setIsImportOpen(true)}
+          className="flex items-center gap-1.5 text-xs font-bold text-pulse-bright hover:text-pulse-bright/80 transition-colors bg-pulse/10 border border-pulse/25 px-3 py-1.5 rounded-lg"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          Import Lectures
+        </button>
       </div>
 
       {/* Subject Header */}
@@ -69,6 +80,13 @@ export default function SubjectPage() {
           <TopicCard key={topic.id} topic={topic} subjectName={subject.name} />
         ))}
       </div>
+
+      <ImportLecturesModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        defaultSubjectId={subject.id}
+        onImported={() => window.location.reload()}
+      />
     </div>
   );
 }
