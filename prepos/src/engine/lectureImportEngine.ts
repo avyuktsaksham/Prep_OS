@@ -13,13 +13,12 @@ export interface ProposedLecture {
   title: string;
   topicId: string;
   topicName: string;
+  subjectName: string;
   confidence: 'high' | 'medium' | 'low';
+  durationMinutes?: number;
 }
 
-function getSubject(subjectId: string): GateSubject | undefined {
-  const data = gateData as { subjects: GateSubject[] };
-  return data.subjects.find((s) => s.id === subjectId);
-}
+const subjects = (gateData as { subjects: GateSubject[] }).subjects;
 
 function stripCodeFence(text: string): string {
   return text
@@ -31,70 +30,76 @@ function stripCodeFence(text: string): string {
 }
 
 /**
- * Sends a screenshot (e.g. a course platform's lecture list) to Gemini and
- * asks it to extract every visible lecture title, then map each one to the
- * closest-matching topic within the given GATE subject. Nothing is written
- * to the database here — this only proposes a list for the person to
- * review, edit, and confirm before anything is actually added.
+ * Reads ONE screenshot and proposes lectures across ALL GATE subjects —
+ * Gemini picks the best-matching topic (and therefore subject) for each
+ * lecture. Nothing is saved here; the person reviews before committing.
  */
-export async function extractLecturesFromScreenshot(
-  subjectId: string,
-  image: GeminiImage
-): Promise<ProposedLecture[]> {
-  const subject = getSubject(subjectId);
-  if (!subject) {
-    throw new Error('Unknown subject.');
-  }
+async function extractFromOneScreenshot(image: GeminiImage): Promise<ProposedLecture[]> {
+  const topicMeta = new Map<string, { topicName: string; subjectName: string }>();
+  const topicList = subjects
+    .map((s) => {
+      s.topics.forEach((t) => topicMeta.set(t.id, { topicName: t.name, subjectName: s.name }));
+      return `${s.name}:\n${s.topics.map((t) => `  - ${t.id}: ${t.name}`).join('\n')}`;
+    })
+    .join('\n\n');
 
-  const topicList = subject.topics.map((t) => `- ${t.id}: ${t.name}`).join('\n');
+  const prompt = `You are looking at a screenshot from a course platform (a lecture list, chapter list, video grid, or lecture planner document). Extract every individual lecture/video title visible.
 
-  const prompt = `You are looking at a screenshot from a course platform (e.g. a lecture list, video course page, or chapter list). Extract every individual lecture/video title visible in the image.
+For each lecture, also look for a duration next to it (often beside a clock icon, HH:MM:SS or MM:SS — the video's total length, not a date). If found, convert to total minutes (rounded). If not visible, omit the field.
 
-For each lecture title you find, pick the single best-matching topic from this list (these are the only valid topic IDs for the "${subject.name}" subject in a GATE CSE syllabus):
+Then pick the single best-matching topic ID for each lecture from this GATE CSE syllabus (grouped by subject). Only use topic IDs from this list:
 
 ${topicList}
 
-Ignore anything that is not an actual lecture/video title (ads, navigation menus, unrelated UI text, subject-level overview cards with no individual lecture name).
+Ignore anything that is not an actual lecture title (ads, menus, dates, instructor names, attachment/notes buttons, subject-level overview cards showing only counts).
 
-Respond with ONLY a raw JSON array, no markdown, no code fences, no explanation. Each item must look exactly like this:
-{"title": "<lecture title as seen>", "topicId": "<one of the topic IDs above>", "confidence": "high" | "medium" | "low"}
+Respond with ONLY a raw JSON array — no markdown, no code fences, no explanation. Each item:
+{"title": "<lecture title as seen>", "topicId": "<topic ID from the list>", "confidence": "high" | "medium" | "low", "durationMinutes": <number, omit if not visible>}
 
-If you cannot confidently match a lecture to any topic in the list, skip that lecture entirely rather than guessing wildly. If the image contains no readable lecture titles at all, respond with an empty array: []`;
+If a lecture clearly belongs to no topic in the list, skip it rather than guessing wildly. If there are no lecture titles at all, respond with: []`;
 
   const raw = await askGeminiWithImage(prompt, image);
-  const cleaned = stripCodeFence(raw);
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = JSON.parse(stripCodeFence(raw));
   } catch {
     throw new Error('Could not read a lecture list from that screenshot. Try a clearer image.');
   }
-
   if (!Array.isArray(parsed)) {
     throw new Error('Unexpected response format from Gemini.');
   }
 
-  const topicNameById = new Map(subject.topics.map((t) => [t.id, t.name]));
-
   const results: ProposedLecture[] = [];
   for (const item of parsed) {
+    const it = item as Record<string, unknown> | null;
     if (
-      item &&
-      typeof item === 'object' &&
-      typeof (item as any).title === 'string' &&
-      typeof (item as any).topicId === 'string' &&
-      topicNameById.has((item as any).topicId)
+      it &&
+      typeof it.title === 'string' &&
+      typeof it.topicId === 'string' &&
+      topicMeta.has(it.topicId)
     ) {
-      const confidence = (item as any).confidence;
+      const meta = topicMeta.get(it.topicId)!;
+      const c = it.confidence;
+      const d = it.durationMinutes;
       results.push({
-        title: (item as any).title,
-        topicId: (item as any).topicId,
-        topicName: topicNameById.get((item as any).topicId)!,
-        confidence: confidence === 'high' || confidence === 'medium' || confidence === 'low' ? confidence : 'medium',
+        title: it.title,
+        topicId: it.topicId,
+        topicName: meta.topicName,
+        subjectName: meta.subjectName,
+        confidence: c === 'high' || c === 'medium' || c === 'low' ? c : 'medium',
+        durationMinutes: typeof d === 'number' && d > 0 ? Math.round(d) : undefined,
       });
     }
   }
-
   return results;
+}
+
+/** Runs extraction over one or more screenshots (sequentially, for rate limits). */
+export async function extractLecturesFromScreenshots(images: GeminiImage[]): Promise<ProposedLecture[]> {
+  const all: ProposedLecture[] = [];
+  for (const image of images) {
+    all.push(...(await extractFromOneScreenshot(image)));
+  }
+  return all;
 }

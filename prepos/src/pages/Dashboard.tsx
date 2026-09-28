@@ -20,6 +20,7 @@ import StudyHeatmap from '../components/cards/StudyHeatmap';
 import FocusNextActions from '../components/cards/FocusNextActions';
 import TodayRevisionReminder from '../components/cards/TodayRevisionReminder';
 import StudyTimer from '../components/cards/StudyTimer';
+import ImportLecturesModal from '../components/modals/ImportLecturesModal';
 
 interface Topic { id: string; name: string; }
 interface Subject { id: string; name: string; weightage: number; topics: Topic[]; }
@@ -105,6 +106,7 @@ export default function Dashboard() {
   const { currentStreak, refetch: refetchStreak } = useStreak();
   const analytics = useAnalytics();
   const [now, setNow] = useState(new Date());
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -135,6 +137,13 @@ export default function Dashboard() {
             {formatFullDate(now)} · {formatClockTime(now)} · GATE 2027 in {getDaysUntilExam()} days
           </p>
         </div>
+        <button
+          onClick={() => setIsImportOpen(true)}
+          className="flex items-center gap-1.5 text-xs font-bold text-pulse-bright bg-pulse/10 border border-pulse/25 hover:bg-pulse/20 transition-colors px-3.5 py-2 rounded-lg"
+        >
+          <Sparkles className="w-4 h-4" />
+          Import Lectures
+        </button>
       </header>
 
       <FocusNextActions tasks={todayTasks} />
@@ -255,6 +264,12 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
+    
+      <ImportLecturesModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImported={() => {}}
+      />
     </div>
   );
 }

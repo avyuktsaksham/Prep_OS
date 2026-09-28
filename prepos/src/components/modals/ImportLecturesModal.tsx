@@ -1,8 +1,8 @@
 // src/components/modals/ImportLecturesModal.tsx
 import { useState, useRef } from 'react';
-import { Sparkles, Upload, X, Trash2, ImageIcon } from 'lucide-react';
+import { Sparkles, Upload, X, Trash2 } from 'lucide-react';
 import gateData from '../../data/gate.json';
-import { extractLecturesFromScreenshot } from '../../engine/lectureImportEngine';
+import { extractLecturesFromScreenshots } from '../../engine/lectureImportEngine';
 import type { ProposedLecture } from '../../engine/lectureImportEngine';
 import { addLecture } from '../../db/lectureService';
 
@@ -12,7 +12,7 @@ interface GateSubject {
   topics: { id: string; name: string }[];
 }
 
-const typedGateData = gateData as { subjects: GateSubject[] };
+const subjects = (gateData as { subjects: GateSubject[] }).subjects;
 
 interface ReviewRow extends ProposedLecture {
   id: string;
@@ -22,7 +22,6 @@ interface ReviewRow extends ProposedLecture {
 interface ImportLecturesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultSubjectId?: string;
   onImported: () => void;
 }
 
@@ -32,16 +31,21 @@ const CONFIDENCE_STYLE: Record<string, string> = {
   low: 'bg-stop/15 text-stop',
 };
 
-export default function ImportLecturesModal({
-  isOpen,
-  onClose,
-  defaultSubjectId,
-  onImported,
-}: ImportLecturesModalProps) {
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const full = reader.result as string;
+      resolve(full.split(',')[1] ?? full);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export default function ImportLecturesModal({ isOpen, onClose, onImported }: ImportLecturesModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [subjectId, setSubjectId] = useState(defaultSubjectId ?? typedGateData.subjects[0]?.id ?? '');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,58 +53,33 @@ export default function ImportLecturesModal({
 
   if (!isOpen) return null;
 
-  const subject = typedGateData.subjects.find((s) => s.id === subjectId);
-
-  const resetAll = () => {
-    setImageFile(null);
-    setImagePreview(null);
+  const handleClose = () => {
+    setFiles([]);
     setRows([]);
     setError(null);
-  };
-
-  const handleClose = () => {
-    resetAll();
     onClose();
   };
 
-  const handleFileSelect = (file: File) => {
-    setImageFile(file);
+  const handleFilesSelected = (list: FileList | null) => {
+    if (!list) return;
+    setFiles((prev) => [...prev, ...Array.from(list)]);
     setRows([]);
     setError(null);
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
   };
 
   const handleExtract = async () => {
-    if (!imageFile || !subject) return;
+    if (files.length === 0) return;
     setIsExtracting(true);
     setError(null);
     try {
-      const base64Full = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(imageFile);
-      });
-      const base64 = base64Full.split(',')[1] ?? base64Full;
-
-      const proposed = await extractLecturesFromScreenshot(subjectId, {
-        base64,
-        mimeType: imageFile.type || 'image/png',
-      });
-
-      if (proposed.length === 0) {
-        setError('No lecture titles found in that screenshot. Try a clearer or more zoomed-in image.');
-      }
-
-      setRows(
-        proposed.map((p, i) => ({
-          ...p,
-          id: `${i}-${p.title}`,
-          included: true,
-        }))
+      const images = await Promise.all(
+        files.map(async (f) => ({ base64: await fileToBase64(f), mimeType: f.type || 'image/png' }))
       );
+      const proposed = await extractLecturesFromScreenshots(images);
+      if (proposed.length === 0) {
+        setError('Koi lecture title nahi mila. Clear/zoomed screenshot try kar.');
+      }
+      setRows(proposed.map((p, i) => ({ ...p, id: `${i}-${p.title}`, included: true })));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -108,13 +87,8 @@ export default function ImportLecturesModal({
     }
   };
 
-  const updateRow = (id: string, patch: Partial<ReviewRow>) => {
+  const updateRow = (id: string, patch: Partial<ReviewRow>) =>
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  };
-
-  const removeRow = (id: string) => {
-    setRows((prev) => prev.filter((r) => r.id !== id));
-  };
 
   const includedCount = rows.filter((r) => r.included).length;
 
@@ -122,9 +96,8 @@ export default function ImportLecturesModal({
     setIsSaving(true);
     setError(null);
     try {
-      const toAdd = rows.filter((r) => r.included);
-      for (const row of toAdd) {
-        await addLecture(row.topicId, { title: row.title });
+      for (const row of rows.filter((r) => r.included)) {
+        await addLecture(row.topicId, { title: row.title, durationMinutes: row.durationMinutes });
       }
       onImported();
       handleClose();
@@ -143,7 +116,7 @@ export default function ImportLecturesModal({
         <div className="flex items-center justify-between p-5 border-b border-edge sticky top-0 bg-void-raised z-10">
           <h2 className="flex items-center gap-2 text-lg font-display font-bold text-ink">
             <Sparkles className="w-5 h-5 text-pulse-bright" />
-            Import Lectures from Screenshot
+            Import Lectures
           </h2>
           <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-panel text-ink-faint hover:text-ink transition-colors">
             <X className="w-5 h-5" />
@@ -151,64 +124,44 @@ export default function ImportLecturesModal({
         </div>
 
         <div className="p-5 space-y-5">
-          <div>
-            <label className="block text-xs font-bold text-ink-faint uppercase tracking-wider mb-1.5">
-              Target Subject
-            </label>
-            <select
-              value={subjectId}
-              onChange={(e) => {
-                setSubjectId(e.target.value);
-                setRows([]);
-              }}
-              disabled={isExtracting}
-              className="w-full px-3.5 py-2.5 bg-panel-raised border border-edge rounded-xl text-ink text-sm focus:outline-none focus:ring-2 focus:ring-signal/50 focus:border-signal disabled:opacity-50"
-            >
-              {typedGateData.subjects.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              handleFilesSelected(e.target.files);
+              e.target.value = '';
+            }}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isExtracting}
+            className="w-full border-2 border-dashed border-edge rounded-xl py-8 flex flex-col items-center justify-center gap-2 hover:border-signal/50 hover:bg-panel-raised transition-colors disabled:opacity-50"
+          >
+            <Upload className="w-6 h-6 text-ink-faint" />
+            <span className="text-sm font-semibold text-ink-muted">
+              {files.length === 0 ? 'Screenshots upload kar (ek ya zyada)' : `${files.length} screenshot(s) — aur add kar`}
+            </span>
+            <span className="text-xs text-ink-faint">Subject AI khud pehchanega — kisi bhi subject ke mix kar sakta hai</span>
+          </button>
+
+          {files.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {files.map((f, i) => (
+                <span key={`${f.name}-${i}`} className="flex items-center gap-1.5 text-xs bg-panel-raised border border-edge rounded-md px-2 py-1 text-ink-muted">
+                  {f.name.length > 22 ? `${f.name.slice(0, 20)}…` : f.name}
+                  <button onClick={() => { setFiles((p) => p.filter((_, idx) => idx !== i)); setRows([]); }} disabled={isExtracting}>
+                    <X className="w-3 h-3 hover:text-stop" />
+                  </button>
+                </span>
               ))}
-            </select>
-          </div>
+            </div>
+          )}
 
-          <div>
-            <label className="block text-xs font-bold text-ink-faint uppercase tracking-wider mb-1.5">
-              Screenshot
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileSelect(file);
-              }}
-            />
-
-            {!imagePreview ? (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-edge rounded-xl py-10 flex flex-col items-center justify-center gap-2 hover:border-signal/50 hover:bg-panel-raised transition-colors"
-              >
-                <Upload className="w-6 h-6 text-ink-faint" />
-                <span className="text-sm font-semibold text-ink-muted">Click to upload a screenshot</span>
-                <span className="text-xs text-ink-faint">A lecture list, course page, or chapter list</span>
-              </button>
-            ) : (
-              <div className="relative">
-                <img src={imagePreview} alt="Preview" className="w-full max-h-56 object-contain rounded-xl border border-edge bg-void" />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isExtracting}
-                  className="absolute top-2 right-2 p-1.5 bg-void-raised border border-edge rounded-lg text-ink-muted hover:text-ink transition-colors disabled:opacity-50"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {imagePreview && rows.length === 0 && (
+          {files.length > 0 && rows.length === 0 && (
             <button
               onClick={handleExtract}
               disabled={isExtracting}
@@ -217,7 +170,7 @@ export default function ImportLecturesModal({
               {isExtracting ? (
                 <>
                   <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  Reading screenshot...
+                  Reading {files.length} screenshot(s)...
                 </>
               ) : (
                 <>
@@ -229,27 +182,21 @@ export default function ImportLecturesModal({
           )}
 
           {error && (
-            <div className="p-3 bg-stop/10 border border-stop/30 rounded-lg text-sm font-medium text-stop">
-              {error}
-            </div>
+            <div className="p-3 bg-stop/10 border border-stop/30 rounded-lg text-sm font-medium text-stop">{error}</div>
           )}
 
-          {rows.length > 0 && subject && (
+          {rows.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-ink-faint uppercase tracking-wider">
                   Review Before Adding ({includedCount} selected)
                 </label>
-                <button
-                  onClick={handleExtract}
-                  disabled={isExtracting}
-                  className="text-xs font-semibold text-signal-bright hover:text-pulse-bright transition-colors"
-                >
+                <button onClick={handleExtract} disabled={isExtracting} className="text-xs font-semibold text-signal-bright hover:text-pulse-bright transition-colors">
                   Re-extract
                 </button>
               </div>
 
-              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {rows.map((row) => (
                   <div key={row.id} className="panel p-3 flex items-start gap-3">
                     <input
@@ -265,26 +212,38 @@ export default function ImportLecturesModal({
                         onChange={(e) => updateRow(row.id, { title: e.target.value })}
                         className="w-full bg-transparent text-sm font-semibold text-ink focus:outline-none focus:ring-1 focus:ring-signal/50 rounded px-1 -mx-1"
                       />
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <select
                           value={row.topicId}
                           onChange={(e) => {
-                            const t = subject.topics.find((tp) => tp.id === e.target.value);
-                            updateRow(row.id, { topicId: e.target.value, topicName: t?.name ?? '' });
+                            for (const s of subjects) {
+                              const t = s.topics.find((tp) => tp.id === e.target.value);
+                              if (t) {
+                                updateRow(row.id, { topicId: t.id, topicName: t.name, subjectName: s.name });
+                                break;
+                              }
+                            }
                           }}
-                          className="text-xs bg-panel-raised border border-edge rounded-md px-2 py-1 text-ink-muted focus:outline-none focus:ring-1 focus:ring-signal/50"
+                          className="text-xs bg-panel-raised border border-edge rounded-md px-2 py-1 text-ink-muted focus:outline-none focus:ring-1 focus:ring-signal/50 max-w-full"
                         >
-                          {subject.topics.map((t) => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
+                          {subjects.map((s) => (
+                            <optgroup key={s.id} label={s.name}>
+                              {s.topics.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                              ))}
+                            </optgroup>
                           ))}
                         </select>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${CONFIDENCE_STYLE[row.confidence]}`}>
                           {row.confidence}
                         </span>
+                        {row.durationMinutes !== undefined && (
+                          <span className="text-[10px] font-mono text-ink-faint">{row.durationMinutes}m</span>
+                        )}
                       </div>
                     </div>
                     <button
-                      onClick={() => removeRow(row.id)}
+                      onClick={() => setRows((prev) => prev.filter((r) => r.id !== row.id))}
                       className="p-1 text-ink-faint hover:text-stop transition-colors shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
